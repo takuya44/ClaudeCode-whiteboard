@@ -19,8 +19,7 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 
-# CORS
-python-cors==1.0.1
+# CORS (FastAPI includes CORS middleware)
 
 # Development & Testing
 pytest==7.4.3

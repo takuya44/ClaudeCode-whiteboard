@@ -57,6 +57,7 @@ docs/
 | ファイル | 説明 | 最終更新 |
 |---------|------|----------|
 | [setup.md](./development/setup.md) | 開発環境セットアップガイド | 2025-06-29 |
+| [docker-setup.md](./development/docker-setup.md) | **Docker起動手順書（トラブルシューティング付き）** | 2025-06-29 |
 | [coding-standards.md](./development/coding-standards.md) | コーディング規約 | 2025-06-29 |
 | [implementation-plan.md](./development/implementation-plan.md) | 4人チーム実装計画書 | 2025-06-29 |
 
@@ -113,8 +114,9 @@ docs/
 
 ### よく参照されるドキュメント
 1. **開発開始時**: [requirements.md](./requirements/requirements.md)
-2. **環境構築時**: [../README.md](../README.md)
-3. **デプロイ時**: [deployment.md](./deployment/deployment.md)
+2. **環境構築時**: [../README.md](../README.md) または [docker-setup.md](./development/docker-setup.md)
+3. **Docker起動問題**: [docker-setup.md](./development/docker-setup.md) 🔥**最重要**
+4. **デプロイ時**: [deployment.md](./deployment/deployment.md)
 
 ### ドキュメント検索
 ```bash

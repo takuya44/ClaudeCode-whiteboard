@@ -13,28 +13,29 @@ Vue 3 + TypeScript + FastAPI で構築されたリアルタイムオンライン
 1. **リポジトリをクローン**
 ```bash
 git clone <repository-url>
-cd whiteboard-app
+cd 05_whiteBoard
 ```
 
-2. **初期設定**
+2. **環境設定ファイルの準備**
 ```bash
-make setup
-# または
 cp .env.example .env
-docker-compose build
 ```
 
-3. **サービス起動**
+3. **Docker Composeでサービス起動**
 ```bash
-make up
-# または
-docker-compose up -d
+# 全サービスを起動（推奨）
+docker-compose up --build -d
+
+# または、フロントエンドとバックエンドのみ
+docker-compose up frontend backend --build -d
 ```
 
-4. **アクセス**
-- フロントエンド: http://localhost:3000
-- バックエンドAPI: http://localhost:8000
-- API文書: http://localhost:8000/docs
+4. **アクセス確認**
+- **フロントエンド**: http://localhost:3000/
+- **バックエンドAPI**: http://localhost:8000/
+- **API文書**: http://localhost:8000/docs
+
+> **⚠️ 起動時の問題**: フロントエンドにアクセスできない場合は [docs/development/docker-setup.md](./docs/development/docker-setup.md) のトラブルシューティングを参照してください。
 
 ## 📁 プロジェクト構成
 

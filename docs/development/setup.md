@@ -131,7 +131,21 @@ docker-compose exec frontend npm run test:e2e
 
 ### よくある問題
 
-#### 1. ポート競合エラー
+#### 1. フロントエンドにアクセスできない 🔥
+**最も多い問題**: コンテナは起動しているが、ブラウザからアクセスできない
+
+```bash
+# 症状確認
+curl -I http://localhost:3000/
+# → Connection reset by peer
+
+# 解決方法: Vite設定を確認
+# frontend/vite.config.ts で host: '0.0.0.0' になっているか確認
+```
+
+**詳細な解決手順**: [docker-setup.md](./docker-setup.md#1-フロントエンドにブラウザからアクセスできない) を参照
+
+#### 2. ポート競合エラー
 ```bash
 # 使用中ポート確認
 lsof -i :3000
@@ -142,7 +156,13 @@ lsof -i :5432
 kill -9 <PID>
 ```
 
-#### 2. Docker容量不足
+#### 3. Python依存関係エラー（python-cors問題）
+```bash
+# 症状: python-cors==1.0.1 のインストールエラー
+# 解決: requirements.txt から該当行を削除またはコメントアウト
+```
+
+#### 4. Docker容量不足
 ```bash
 # 不要なコンテナ・イメージ削除
 docker system prune -a
@@ -151,26 +171,21 @@ docker system prune -a
 docker volume prune
 ```
 
-#### 3. データベース接続エラー
+#### 5. データベース接続エラー
 ```bash
 # データベースログ確認
-make logs-db
+docker-compose logs db
 
 # データベースリセット
-make reset-db
+docker-compose down -v
+docker-compose up db -d
 ```
 
-#### 4. Node.js依存関係エラー
+#### 6. Node.js依存関係エラー
 ```bash
 # node_modules再インストール
 docker-compose exec frontend rm -rf node_modules
 docker-compose exec frontend npm install
-```
-
-#### 5. Python依存関係エラー
-```bash
-# 依存関係再インストール
-docker-compose exec backend pip install -r requirements.txt
 ```
 
 ### 環境リセット
