@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+*.d.ts
+coverage/
+.nuxt/
+.output/
+.vite/
+.DS_Store
