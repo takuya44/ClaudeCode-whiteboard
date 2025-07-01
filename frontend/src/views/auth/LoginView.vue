@@ -3,15 +3,15 @@
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
+          アカウントにログイン
         </h2>
         <p class="mt-2 text-center text-sm text-gray-600">
-          Or
+          または
           <router-link
             to="/register"
             class="font-medium text-primary-600 hover:text-primary-500"
           >
-            create a new account
+            新規アカウント作成
           </router-link>
         </p>
       </div>
@@ -24,8 +24,8 @@
           <BaseInput
             v-model="form.email"
             type="email"
-            label="Email address"
-            placeholder="Enter your email"
+            label="メールアドレス"
+            placeholder="メールアドレスを入力"
             required
             :error="errors.email"
           />
@@ -33,8 +33,8 @@
           <BaseInput
             v-model="form.password"
             type="password"
-            label="Password"
-            placeholder="Enter your password"
+            label="パスワード"
+            placeholder="パスワードを入力"
             required
             :error="errors.password"
           />
@@ -53,7 +53,7 @@
               for="remember-me"
               class="ml-2 block text-sm text-gray-900"
             >
-              Remember me
+              ログイン状態を保持
             </label>
           </div>
 
@@ -62,7 +62,7 @@
               href="#"
               class="font-medium text-primary-600 hover:text-primary-500"
             >
-              Forgot your password?
+              パスワードを忘れた場合
             </a>
           </div>
         </div>
@@ -71,9 +71,9 @@
           type="submit"
           block
           :loading="isLoading"
-          loading-text="Signing in..."
+          loading-text="ログイン中..."
         >
-          Sign in
+          ログイン
         </BaseButton>
       </form>
     </div>
@@ -102,15 +102,15 @@ const validateForm = () => {
   errors.value = {}
   
   if (!form.email) {
-    errors.value.email = 'Email is required'
+    errors.value.email = 'メールアドレスが必要です'
   } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-    errors.value.email = 'Email is invalid'
+    errors.value.email = 'メールアドレスが無効です'
   }
   
   if (!form.password) {
-    errors.value.password = 'Password is required'
+    errors.value.password = 'パスワードが必要です'
   } else if (form.password.length < 6) {
-    errors.value.password = 'Password must be at least 6 characters'
+    errors.value.password = 'パスワードは6文字以上で入力してください'
   }
   
   return Object.keys(errors.value).length === 0
@@ -129,7 +129,7 @@ const handleSubmit = async () => {
     router.push(redirect || '/dashboard')
   } catch (error) {
     console.error('Login failed:', error)
-    errors.value.general = 'Invalid email or password'
+    errors.value.general = 'メールアドレスまたはパスワードが無効です'
   } finally {
     isLoading.value = false
   }

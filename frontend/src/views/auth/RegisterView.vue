@@ -3,15 +3,15 @@
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Create your account
+          アカウントを作成
         </h2>
         <p class="mt-2 text-center text-sm text-gray-600">
-          Or
+          または
           <router-link
             to="/login"
             class="font-medium text-primary-600 hover:text-primary-500"
           >
-            sign in to your existing account
+            既存のアカウントでログイン
           </router-link>
         </p>
       </div>
@@ -23,8 +23,8 @@
         <div class="space-y-4">
           <BaseInput
             v-model="form.name"
-            label="Full Name"
-            placeholder="Enter your full name"
+            label="お名前"
+            placeholder="お名前を入力"
             required
             :error="errors.name"
           />
@@ -32,8 +32,8 @@
           <BaseInput
             v-model="form.email"
             type="email"
-            label="Email address"
-            placeholder="Enter your email"
+            label="メールアドレス"
+            placeholder="メールアドレスを入力"
             required
             :error="errors.email"
           />
@@ -41,8 +41,8 @@
           <BaseInput
             v-model="form.password"
             type="password"
-            label="Password"
-            placeholder="Enter your password"
+            label="パスワード"
+            placeholder="パスワードを入力"
             required
             :error="errors.password"
           />
@@ -50,8 +50,8 @@
           <BaseInput
             v-model="form.confirmPassword"
             type="password"
-            label="Confirm Password"
-            placeholder="Confirm your password"
+            label="パスワード確認"
+            placeholder="パスワードを再入力"
             required
             :error="errors.confirmPassword"
           />
@@ -69,16 +69,17 @@
             for="agree-terms"
             class="ml-2 block text-sm text-gray-900"
           >
-            I agree to the 
+
             <a
               href="#"
               class="text-primary-600 hover:text-primary-500"
-            >Terms of Service</a>
-            and 
+            >利用規約</a>
+            および
             <a
               href="#"
               class="text-primary-600 hover:text-primary-500"
-            >Privacy Policy</a>
+            >プライバシーポリシー</a>
+            に同意します
           </label>
         </div>
 
@@ -86,9 +87,9 @@
           type="submit"
           block
           :loading="isLoading"
-          loading-text="Creating account..."
+          loading-text="アカウント作成中..."
         >
-          Create Account
+          アカウント作成
         </BaseButton>
       </form>
     </div>
@@ -119,29 +120,29 @@ const validateForm = () => {
   errors.value = {}
   
   if (!form.name.trim()) {
-    errors.value.name = 'Name is required'
+    errors.value.name = 'お名前が必要です'
   }
   
   if (!form.email) {
-    errors.value.email = 'Email is required'
+    errors.value.email = 'メールアドレスが必要です'
   } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-    errors.value.email = 'Email is invalid'
+    errors.value.email = 'メールアドレスが無効です'
   }
   
   if (!form.password) {
-    errors.value.password = 'Password is required'
+    errors.value.password = 'パスワードが必要です'
   } else if (form.password.length < 6) {
-    errors.value.password = 'Password must be at least 6 characters'
+    errors.value.password = 'パスワードは6文字以上で入力してください'
   }
   
   if (!form.confirmPassword) {
-    errors.value.confirmPassword = 'Please confirm your password'
+    errors.value.confirmPassword = 'パスワードを確認してください'
   } else if (form.password !== form.confirmPassword) {
-    errors.value.confirmPassword = 'Passwords do not match'
+    errors.value.confirmPassword = 'パスワードが一致しません'
   }
   
   if (!form.agreeToTerms) {
-    errors.value.agreeToTerms = 'You must agree to the terms of service'
+    errors.value.agreeToTerms = '利用規約に同意する必要があります'
   }
   
   return Object.keys(errors.value).length === 0
@@ -162,7 +163,7 @@ const handleSubmit = async () => {
     router.push('/dashboard')
   } catch (error) {
     console.error('Registration failed:', error)
-    errors.value.general = 'Registration failed. Please try again.'
+    errors.value.general = '登録に失敗しました。もう一度お試しください。'
   } finally {
     isLoading.value = false
   }

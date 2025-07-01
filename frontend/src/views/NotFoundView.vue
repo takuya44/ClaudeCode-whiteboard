@@ -5,13 +5,13 @@
         404
       </h1>
       <h2 class="text-3xl font-semibold text-gray-900 mb-4">
-        Page Not Found
+        ページが見つかりません
       </h2>
       <p class="text-gray-600 mb-8 max-w-md">
-        Sorry, we couldn't find the page you're looking for.
+        申し訳ございませんが、お探しのページが見つかりませんでした。
       </p>
       <BaseButton @click="$router.push('/')">
-        Go Back Home
+        ホームに戻る
       </BaseButton>
     </div>
   </div>

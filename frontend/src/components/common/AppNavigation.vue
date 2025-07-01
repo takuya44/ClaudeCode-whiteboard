@@ -34,7 +34,7 @@
               class="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
               :class="{ 'text-primary-600': $route.name === 'Dashboard' }"
             >
-              Dashboard
+              ダッシュボード
             </router-link>
           </div>
         </div>
@@ -109,7 +109,7 @@
                           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                         />
                       </svg>
-                      Profile Settings
+                      プロフィール設定
                     </router-link>
                     <button
                       class="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -128,7 +128,7 @@
                           d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                         />
                       </svg>
-                      Sign Out
+                      ログアウト
                     </button>
                   </div>
                 </div>
@@ -141,13 +141,13 @@
               to="/login"
               class="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
             >
-              Sign In
+              ログイン
             </router-link>
             <BaseButton
               size="sm"
               @click="$router.push('/register')"
             >
-              Get Started
+              はじめる
             </BaseButton>
           </template>
 
@@ -193,20 +193,20 @@
               class="block px-3 py-2 text-gray-600 hover:text-primary-600 font-medium transition-colors"
               @click="showMobileMenu = false"
             >
-              Dashboard
+              ダッシュボード
             </router-link>
             <router-link
               to="/profile"
               class="block px-3 py-2 text-gray-600 hover:text-primary-600 font-medium transition-colors"
               @click="showMobileMenu = false"
             >
-              Profile
+              プロフィール
             </router-link>
             <button
               class="w-full text-left px-3 py-2 text-red-600 hover:text-red-700 font-medium transition-colors"
               @click="handleLogout"
             >
-              Sign Out
+              ログアウト
             </button>
           </div>
         </div>

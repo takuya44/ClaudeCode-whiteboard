@@ -24,12 +24,12 @@
                 />
               </svg>
             </template>
-            Back to Dashboard
+            ダッシュボードに戻る
           </BaseButton>
           
           <div>
             <h1 class="text-lg font-semibold text-gray-900">
-              {{ currentWhiteboard?.title || 'Loading...' }}
+              {{ currentWhiteboard?.title || '読み込み中...' }}
             </h1>
             <p
               v-if="currentWhiteboard?.description"
@@ -45,13 +45,13 @@
             variant="outline"
             size="sm"
           >
-            Share
+            共有
           </BaseButton>
           <BaseButton
             variant="outline"
             size="sm"
           >
-            Export
+            エクスポート
           </BaseButton>
         </div>
       </div>
@@ -86,7 +86,7 @@
               class="w-8 h-8 rounded border border-gray-300"
               @change="handleColorChange"
             >
-            <span class="text-sm text-gray-600">Color</span>
+            <span class="text-sm text-gray-600">色</span>
           </div>
           
           <!-- Stroke Width -->
@@ -109,19 +109,19 @@
             size="sm"
             @click="clearCanvas"
           >
-            Clear All
+            すべてクリア
           </BaseButton>
           <BaseButton
             variant="outline"
             size="sm"
           >
-            Undo
+            元に戻す
           </BaseButton>
           <BaseButton
             variant="outline"
             size="sm"
           >
-            Redo
+            やり直し
           </BaseButton>
         </div>
       </div>
@@ -145,10 +145,10 @@
             />
           </svg>
           <h3 class="mt-2 text-sm font-medium text-gray-900">
-            Canvas Implementation
+            キャンバス実装
           </h3>
           <p class="mt-1 text-sm text-gray-500">
-            Canvas drawing functionality will be implemented by Frontend Developer B
+            キャンバス描画機能はフロントエンド開発者Bによって実装される予定です
           </p>
         </div>
       </div>
@@ -173,12 +173,12 @@ const selectedColor = computed(() => whiteboardStore.selectedColor)
 const strokeWidth = computed(() => whiteboardStore.strokeWidth)
 
 const drawingTools = [
-  { id: 'pen', name: 'Pen' },
-  { id: 'rectangle', name: 'Rectangle' },
-  { id: 'circle', name: 'Circle' },
-  { id: 'text', name: 'Text' },
-  { id: 'sticky', name: 'Sticky Note' },
-  { id: 'eraser', name: 'Eraser' },
+  { id: 'pen', name: 'ペン' },
+  { id: 'rectangle', name: '長方形' },
+  { id: 'circle', name: '円' },
+  { id: 'text', name: 'テキスト' },
+  { id: 'sticky', name: '付箋' },
+  { id: 'eraser', name: '消しゴム' },
 ]
 
 const setSelectedTool = (tool: string) => {
@@ -196,7 +196,7 @@ const handleStrokeWidthChange = (event: Event) => {
 }
 
 const clearCanvas = () => {
-  if (confirm('Are you sure you want to clear the entire canvas?')) {
+  if (confirm('本当にキャンバス全体をクリアしますか？')) {
     whiteboardStore.clearWhiteboard()
   }
 }

@@ -5,10 +5,10 @@
         <div class="bg-white shadow-soft rounded-lg">
           <div class="px-6 py-4 border-b border-gray-200">
             <h1 class="text-2xl font-bold text-gray-900">
-              Profile Settings
+              プロフィール設定
             </h1>
             <p class="text-gray-600">
-              Manage your account information and preferences.
+              アカウント情報と設定を管理します。
             </p>
           </div>
           
@@ -17,8 +17,8 @@
               <div class="space-y-4">
                 <BaseInput
                   v-model="form.name"
-                  label="Full Name"
-                  placeholder="Enter your full name"
+                  label="お名前"
+                  placeholder="お名前を入力"
                   required
                   :error="errors.name"
                 />
@@ -26,8 +26,8 @@
                 <BaseInput
                   v-model="form.email"
                   type="email"
-                  label="Email Address"
-                  placeholder="Enter your email"
+                  label="メールアドレス"
+                  placeholder="メールアドレスを入力"
                   required
                   :error="errors.email"
                 />
@@ -37,9 +37,9 @@
                 <BaseButton
                   type="submit"
                   :loading="isLoading"
-                  loading-text="Updating..."
+                  loading-text="更新中..."
                 >
-                  Update Profile
+                  プロフィール更新
                 </BaseButton>
               </div>
             </form>
@@ -48,15 +48,15 @@
             
             <div>
               <h3 class="text-lg font-medium text-gray-900 mb-4">
-                Change Password
+                パスワード変更
               </h3>
               <form @submit.prevent="handleChangePassword">
                 <div class="space-y-4">
                   <BaseInput
                     v-model="passwordForm.currentPassword"
                     type="password"
-                    label="Current Password"
-                    placeholder="Enter current password"
+                    label="現在のパスワード"
+                    placeholder="現在のパスワードを入力"
                     required
                     :error="passwordErrors.currentPassword"
                   />
@@ -64,8 +64,8 @@
                   <BaseInput
                     v-model="passwordForm.newPassword"
                     type="password"
-                    label="New Password"
-                    placeholder="Enter new password"
+                    label="新しいパスワード"
+                    placeholder="新しいパスワードを入力"
                     required
                     :error="passwordErrors.newPassword"
                   />
@@ -73,8 +73,8 @@
                   <BaseInput
                     v-model="passwordForm.confirmNewPassword"
                     type="password"
-                    label="Confirm New Password"
-                    placeholder="Confirm new password"
+                    label="新しいパスワード確認"
+                    placeholder="新しいパスワードを再入力"
                     required
                     :error="passwordErrors.confirmNewPassword"
                   />
@@ -85,9 +85,9 @@
                     type="submit"
                     variant="secondary"
                     :loading="isPasswordLoading"
-                    loading-text="Changing..."
+                    loading-text="変更中..."
                   >
-                    Change Password
+                    パスワード変更
                   </BaseButton>
                 </div>
               </form>
@@ -129,13 +129,13 @@ const validateProfile = () => {
   errors.value = {}
   
   if (!form.name.trim()) {
-    errors.value.name = 'Name is required'
+    errors.value.name = 'お名前が必要です'
   }
   
   if (!form.email) {
-    errors.value.email = 'Email is required'
+    errors.value.email = 'メールアドレスが必要です'
   } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-    errors.value.email = 'Email is invalid'
+    errors.value.email = 'メールアドレスが無効です'
   }
   
   return Object.keys(errors.value).length === 0
@@ -145,19 +145,19 @@ const validatePassword = () => {
   passwordErrors.value = {}
   
   if (!passwordForm.currentPassword) {
-    passwordErrors.value.currentPassword = 'Current password is required'
+    passwordErrors.value.currentPassword = '現在のパスワードが必要です'
   }
   
   if (!passwordForm.newPassword) {
-    passwordErrors.value.newPassword = 'New password is required'
+    passwordErrors.value.newPassword = '新しいパスワードが必要です'
   } else if (passwordForm.newPassword.length < 6) {
-    passwordErrors.value.newPassword = 'Password must be at least 6 characters'
+    passwordErrors.value.newPassword = 'パスワードは6文字以上で入力してください'
   }
   
   if (!passwordForm.confirmNewPassword) {
-    passwordErrors.value.confirmNewPassword = 'Please confirm your new password'
+    passwordErrors.value.confirmNewPassword = '新しいパスワードを確認してください'
   } else if (passwordForm.newPassword !== passwordForm.confirmNewPassword) {
-    passwordErrors.value.confirmNewPassword = 'Passwords do not match'
+    passwordErrors.value.confirmNewPassword = 'パスワードが一致しません'
   }
   
   return Object.keys(passwordErrors.value).length === 0
@@ -178,7 +178,7 @@ const handleUpdateProfile = async () => {
     console.log('Profile updated successfully')
   } catch (error) {
     console.error('Profile update failed:', error)
-    errors.value.general = 'Profile update failed. Please try again.'
+    errors.value.general = 'プロフィール更新に失敗しました。もう一度お試しください。'
   } finally {
     isLoading.value = false
   }
@@ -204,7 +204,7 @@ const handleChangePassword = async () => {
     console.log('Password changed successfully')
   } catch (error) {
     console.error('Password change failed:', error)
-    passwordErrors.value.general = 'Password change failed. Please try again.'
+    passwordErrors.value.general = 'パスワード変更に失敗しました。もう一度お試しください。'
   } finally {
     isPasswordLoading.value = false
   }

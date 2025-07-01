@@ -3,10 +3,10 @@
     <div class="container mx-auto px-4 py-16">
       <div class="text-center mb-16">
         <h1 class="text-5xl font-bold text-gray-900 mb-6">
-          Collaborative Whiteboard
+          コラボレーション ホワイトボード
         </h1>
         <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-          Create, collaborate, and share your ideas in real-time with our powerful whiteboard application.
+          強力なホワイトボードアプリケーションで、リアルタイムにアイデアを作成、共有、コラボレーションしましょう。
         </p>
         <div class="space-x-4">
           <BaseButton
@@ -14,14 +14,14 @@
             size="lg"
             @click="$router.push('/register')"
           >
-            Get Started
+            はじめる
           </BaseButton>
           <BaseButton
             v-else
             size="lg"
             @click="$router.push('/dashboard')"
           >
-            Go to Dashboard
+            ダッシュボードへ
           </BaseButton>
           <BaseButton
             v-if="!isAuthenticated"
@@ -29,7 +29,7 @@
             size="lg"
             @click="$router.push('/login')"
           >
-            Sign In
+            ログイン
           </BaseButton>
         </div>
       </div>
@@ -52,10 +52,10 @@
             </svg>
           </div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">
-            Draw & Create
+            描画・作成
           </h3>
           <p class="text-gray-600">
-            Use powerful drawing tools to create diagrams, sketches, and visual ideas.
+            強力な描画ツールを使用して、図表、スケッチ、ビジュアルアイデアを作成しましょう。
           </p>
         </div>
         
@@ -76,10 +76,10 @@
             </svg>
           </div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">
-            Collaborate
+            コラボレーション
           </h3>
           <p class="text-gray-600">
-            Work together in real-time with your team members and friends.
+            チームメンバーや友人とリアルタイムで一緒に作業しましょう。
           </p>
         </div>
         
@@ -100,10 +100,10 @@
             </svg>
           </div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">
-            Share
+            共有
           </h3>
           <p class="text-gray-600">
-            Share your whiteboards and collaborate with anyone, anywhere.
+            ホワイトボードを共有し、いつでもどこでも誰とでもコラボレーションできます。
           </p>
         </div>
       </div>

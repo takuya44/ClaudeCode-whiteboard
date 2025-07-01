@@ -3,10 +3,10 @@
     <div class="container mx-auto px-4 py-8">
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">
-          Welcome back, {{ user?.name || 'User' }}!
+          お帰りなさい、{{ user?.name || 'ユーザー' }}さん！
         </h1>
         <p class="text-gray-600">
-          Manage your whiteboards and start collaborating.
+          ホワイトボードを管理し、コラボレーションを開始しましょう。
         </p>
       </div>
 
@@ -27,7 +27,7 @@
               />
             </svg>
           </template>
-          Create New Whiteboard
+          新しいホワイトボードを作成
         </BaseButton>
       </div>
 
@@ -56,10 +56,10 @@
           />
         </svg>
         <h3 class="mt-2 text-sm font-medium text-gray-900">
-          No whiteboards
+          ホワイトボードがありません
         </h3>
         <p class="mt-1 text-sm text-gray-500">
-          Get started by creating your first whiteboard.
+          最初のホワイトボードを作成して始めましょう。
         </p>
       </div>
 
@@ -88,11 +88,11 @@
               <span
                 v-if="whiteboard.isPublic"
                 class="text-green-600"
-              >Public</span>
+              >公開</span>
               <span
                 v-else
                 class="text-gray-600"
-              >Private</span>
+              >非公開</span>
             </div>
           </div>
         </div>
@@ -101,7 +101,7 @@
 
     <BaseModal
       :show="showCreateModal"
-      title="Create New Whiteboard"
+      title="新しいホワイトボードを作成"
       @close="showCreateModal = false"
       @cancel="showCreateModal = false"
       @confirm="handleCreateWhiteboard"
@@ -109,15 +109,15 @@
       <div class="space-y-4">
         <BaseInput
           v-model="newWhiteboard.title"
-          label="Title"
-          placeholder="Enter whiteboard title"
+          label="タイトル"
+          placeholder="ホワイトボードのタイトルを入力"
           required
         />
         
         <BaseInput
           v-model="newWhiteboard.description"
-          label="Description (optional)"
-          placeholder="Enter description"
+          label="説明（任意）"
+          placeholder="説明を入力"
         />
         
         <div class="flex items-center">
@@ -131,7 +131,7 @@
             for="is-public"
             class="ml-2 block text-sm text-gray-900"
           >
-            Make this whiteboard public
+            このホワイトボードを公開する
           </label>
         </div>
       </div>
