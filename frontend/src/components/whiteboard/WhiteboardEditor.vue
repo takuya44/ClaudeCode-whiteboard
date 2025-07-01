@@ -1,0 +1,396 @@
+<template>
+  <div class="whiteboard-editor flex h-full">
+    <!-- Sidebar with toolbar -->
+    <div class="sidebar flex-shrink-0 w-80 bg-gray-50 border-r border-gray-200 p-4">
+      <div class="mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">
+          {{ whiteboard?.title || 'Whiteboard' }}
+        </h2>
+        <p class="text-sm text-gray-600">
+          {{ whiteboard?.description || 'Collaborative whiteboard' }}
+        </p>
+      </div>
+
+      <!-- Drawing Toolbar -->
+      <DrawingToolbar
+        v-model:tool="currentTool"
+        :can-undo="canUndo"
+        :can-redo="canRedo"
+        @undo="handleUndo"
+        @redo="handleRedo"
+        @clear="handleClear"
+      />
+
+      <!-- Whiteboard Info -->
+      <div class="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+        <h3 class="text-sm font-medium text-gray-900 mb-3">
+          Whiteboard Info
+        </h3>
+        
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Elements:</span>
+            <span class="font-medium">{{ elementCount }}</span>
+          </div>
+          
+          <div class="flex justify-between">
+            <span class="text-gray-600">Online Users:</span>
+            <span class="font-medium">{{ onlineUserCount }}</span>
+          </div>
+          
+          <div class="flex justify-between">
+            <span class="text-gray-600">Connection:</span>
+            <span
+              :class="[
+                'font-medium',
+                isConnected ? 'text-green-600' : 'text-red-600'
+              ]"
+            >
+              {{ isConnected ? 'Connected' : 'Disconnected' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <button
+            :disabled="isSaving"
+            class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            @click="saveWhiteboard"
+          >
+            <span
+              v-if="isSaving"
+              class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+            />
+            {{ isSaving ? 'Saving...' : 'Save Whiteboard' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Keyboard Shortcuts -->
+      <div class="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+        <h3 class="text-sm font-medium text-gray-900 mb-3">
+          Keyboard Shortcuts
+        </h3>
+        <div class="space-y-1 text-xs text-gray-600">
+          <div class="flex justify-between">
+            <span>Undo</span>
+            <kbd class="bg-gray-100 px-2 py-1 rounded">Ctrl+Z</kbd>
+          </div>
+          <div class="flex justify-between">
+            <span>Redo</span>
+            <kbd class="bg-gray-100 px-2 py-1 rounded">Ctrl+Y</kbd>
+          </div>
+          <div class="flex justify-between">
+            <span>Clear</span>
+            <kbd class="bg-gray-100 px-2 py-1 rounded">Ctrl+D</kbd>
+          </div>
+          <div class="flex justify-between">
+            <span>Save</span>
+            <kbd class="bg-gray-100 px-2 py-1 rounded">Ctrl+S</kbd>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main canvas area -->
+    <div class="canvas-area flex-1 flex flex-col">
+      <!-- Top bar -->
+      <div class="top-bar flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+        <div class="flex items-center space-x-4">
+          <h1 class="text-xl font-semibold text-gray-900">
+            {{ whiteboard?.title || 'Untitled Whiteboard' }}
+          </h1>
+          
+          <div class="flex items-center space-x-2">
+            <div
+              class="w-2 h-2 rounded-full"
+              :class="[
+                isConnected ? 'bg-green-500' : 'bg-red-500'
+              ]"
+            />
+            <span class="text-sm text-gray-600">
+              {{ isConnected ? 'Connected' : 'Disconnected' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <!-- Zoom controls -->
+          <div class="flex items-center space-x-2">
+            <button
+              class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              title="Zoom Out"
+              @click="zoomOut"
+            >
+              <ZoomOutIcon class="w-5 h-5" />
+            </button>
+            
+            <span class="text-sm text-gray-600 min-w-[60px] text-center">
+              {{ Math.round(zoomLevel * 100) }}%
+            </span>
+            
+            <button
+              class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+              title="Zoom In"
+              @click="zoomIn"
+            >
+              <ZoomInIcon class="w-5 h-5" />
+            </button>
+          </div>
+
+          <!-- View controls -->
+          <button
+            class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+            title="Reset View"
+            @click="resetView"
+          >
+            <ArrowsPointingOutIcon class="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Canvas container -->
+      <div class="canvas-container flex-1 overflow-hidden relative">
+        <div
+          class="canvas-wrapper absolute inset-0"
+          :style="{
+            transform: `scale(${zoomLevel}) translate(${panX}px, ${panY}px)`,
+            transformOrigin: 'top left'
+          }"
+        >
+          <WhiteboardCanvas
+            ref="canvasRef"
+            :whiteboard-id="whiteboardId"
+            :tool="currentTool"
+            :width="canvasWidth"
+            :height="canvasHeight"
+            @drawing-updated="handleDrawingUpdated"
+            @users-changed="handleUsersChanged"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import DrawingToolbar from './DrawingToolbar.vue'
+import WhiteboardCanvas from './WhiteboardCanvas.vue'
+import type { DrawingTool, DrawingElement, Whiteboard, User } from '@/types'
+import { useWhiteboardStore } from '@/stores/whiteboard'
+
+interface Props {
+  whiteboardId?: string
+}
+
+const props = defineProps<Props>()
+const route = useRoute()
+
+// Store
+const whiteboardStore = useWhiteboardStore()
+
+// Refs
+const canvasRef = ref<InstanceType<typeof WhiteboardCanvas> | null>(null)
+
+// State
+const whiteboardId = ref(props.whiteboardId || route.params.id as string)
+const whiteboard = ref<Whiteboard | null>(null)
+const currentTool = ref<DrawingTool>({
+  type: 'pen',
+  color: '#000000',
+  strokeWidth: 2,
+  fill: 'transparent'
+})
+
+const elementCount = ref(0)
+const onlineUserCount = ref(0)
+const isConnected = ref(false)
+const isSaving = ref(false)
+
+// Canvas settings
+const canvasWidth = ref(1200)
+const canvasHeight = ref(800)
+
+// View controls
+const zoomLevel = ref(1)
+const panX = ref(0)
+const panY = ref(0)
+const minZoom = 0.1
+const maxZoom = 5
+
+// Icons
+const ZoomInIcon = () => 'zoom-in'
+const ZoomOutIcon = () => 'zoom-out'
+const ArrowsPointingOutIcon = () => 'arrows-pointing-out'
+
+// Computed
+const canUndo = computed(() => canvasRef.value?.canUndo || false)
+const canRedo = computed(() => canvasRef.value?.canRedo || false)
+
+// Methods
+const loadWhiteboard = async () => {
+  try {
+    if (!whiteboardId.value) return
+    
+    // Mock whiteboard data for now (will be replaced with actual API call)
+    whiteboard.value = {
+      id: whiteboardId.value,
+      title: 'My Whiteboard',
+      description: 'A collaborative workspace',
+      ownerId: 'user1',
+      isPublic: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      collaborators: []
+    }
+    
+    // Load existing elements into canvas (mock empty for now)
+    if (whiteboard.value && canvasRef.value) {
+      const elements: DrawingElement[] = []
+      canvasRef.value.loadElements(elements)
+    }
+  } catch (error) {
+    console.error('Failed to load whiteboard:', error)
+  }
+}
+
+const saveWhiteboard = async () => {
+  if (!whiteboard.value || isSaving.value) return
+  
+  try {
+    isSaving.value = true
+    
+    // Mock save functionality (will be replaced with actual API call)
+    console.log('Saving whiteboard elements...')
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    console.log('Whiteboard saved successfully')
+  } catch (error) {
+    console.error('Failed to save whiteboard:', error)
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const handleDrawingUpdated = (elements: DrawingElement[]) => {
+  elementCount.value = elements.length
+  
+  // Auto-save periodically (debounced)
+  // This could be improved with a proper debounce mechanism
+}
+
+const handleUsersChanged = (users: User[]) => {
+  onlineUserCount.value = users.length
+}
+
+const handleUndo = () => {
+  canvasRef.value?.undo()
+}
+
+const handleRedo = () => {
+  canvasRef.value?.redo()
+}
+
+const handleClear = () => {
+  canvasRef.value?.clear()
+}
+
+// Zoom controls
+const zoomIn = () => {
+  zoomLevel.value = Math.min(zoomLevel.value * 1.2, maxZoom)
+}
+
+const zoomOut = () => {
+  zoomLevel.value = Math.max(zoomLevel.value / 1.2, minZoom)
+}
+
+const resetView = () => {
+  zoomLevel.value = 1
+  panX.value = 0
+  panY.value = 0
+}
+
+// Keyboard shortcuts
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.ctrlKey || e.metaKey) {
+    switch (e.key) {
+      case 'z':
+        e.preventDefault()
+        if (e.shiftKey) {
+          handleRedo()
+        } else {
+          handleUndo()
+        }
+        break
+      case 'y':
+        e.preventDefault()
+        handleRedo()
+        break
+      case 'd':
+        e.preventDefault()
+        handleClear()
+        break
+      case 's':
+        e.preventDefault()
+        saveWhiteboard()
+        break
+      case '=':
+      case '+':
+        e.preventDefault()
+        zoomIn()
+        break
+      case '-':
+        e.preventDefault()
+        zoomOut()
+        break
+      case '0':
+        e.preventDefault()
+        resetView()
+        break
+    }
+  }
+}
+
+// Watch for tool changes
+watch(currentTool, (newTool) => {
+  // Tool changes will be handled by the canvas component through props
+}, { deep: true })
+
+// Lifecycle
+onMounted(async () => {
+  await loadWhiteboard()
+  
+  // Add keyboard event listeners
+  document.addEventListener('keydown', handleKeydown)
+  
+  // Simulate connection status (should come from WebSocket)
+  isConnected.value = true
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
+</script>
+
+<style scoped>
+.whiteboard-editor {
+  height: 100vh;
+  background: #f9fafb;
+}
+
+.canvas-container {
+  background: #ffffff;
+  background-image: 
+    linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+kbd {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+</style>

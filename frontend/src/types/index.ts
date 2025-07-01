@@ -29,21 +29,55 @@ export interface Whiteboard {
 export interface DrawingElement {
   id: string
   whiteboardId: string
-  type: 'pen' | 'rectangle' | 'circle' | 'text' | 'sticky'
+  type: 'pen' | 'line' | 'rectangle' | 'circle' | 'text' | 'sticky' | 'eraser' | 'select'
   x: number
   y: number
   width?: number
   height?: number
+  endX?: number
+  endY?: number
+  points?: Array<{x: number, y: number}>
   color: string
   strokeWidth?: number
+  fill?: string
   text?: string
+  fontSize?: number
+  fontFamily?: string
   createdAt: string
   updatedAt: string
   userId: string
 }
 
+export interface DrawingTool {
+  type: 'pen' | 'line' | 'rectangle' | 'circle' | 'text' | 'eraser' | 'select'
+  color: string
+  strokeWidth: number
+  fill?: string
+  fontSize?: number
+}
+
+export interface Point {
+  x: number
+  y: number
+}
+
+export interface CanvasState {
+  isDrawing: boolean
+  tool: DrawingTool
+  elements: DrawingElement[]
+  history: DrawingElement[][]
+  currentHistoryIndex: number
+}
+
+export interface DrawingEvent {
+  type: 'start' | 'move' | 'end'
+  point: Point
+  tool: DrawingTool
+  element?: DrawingElement
+}
+
 export interface WebSocketMessage {
-  type: 'draw' | 'erase' | 'cursor' | 'user_join' | 'user_leave'
+  type: 'draw' | 'erase' | 'cursor' | 'user_join' | 'user_leave' | 'ping' | 'pong' | 'drawing_event'
   data: any
   userId: string
   timestamp: string
