@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import type { ApiResponse } from '@/types'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+const baseURL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/v1` : 'http://localhost:8000/api/v1'
 
 const api: AxiosInstance = axios.create({
   baseURL,
@@ -39,24 +39,84 @@ api.interceptors.response.use(
 )
 
 export const apiRequest = {
-  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return api.get(url, config).then(response => response.data)
+  async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await api.get(url, config)
+      return { 
+        success: true, 
+        data: response.data 
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.message || 'Request failed',
+        errors: error.response?.data?.errors
+      }
+    }
   },
   
-  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return api.post(url, data, config).then(response => response.data)
+  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await api.post(url, data, config)
+      return { 
+        success: true, 
+        data: response.data 
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.message || 'Request failed',
+        errors: error.response?.data?.errors
+      }
+    }
   },
   
-  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return api.put(url, data, config).then(response => response.data)
+  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await api.put(url, data, config)
+      return { 
+        success: true, 
+        data: response.data 
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.message || 'Request failed',
+        errors: error.response?.data?.errors
+      }
+    }
   },
   
-  patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return api.patch(url, data, config).then(response => response.data)
+  async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await api.patch(url, data, config)
+      return { 
+        success: true, 
+        data: response.data 
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.message || 'Request failed',
+        errors: error.response?.data?.errors
+      }
+    }
   },
   
-  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return api.delete(url, config).then(response => response.data)
+  async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await api.delete(url, config)
+      return { 
+        success: true, 
+        data: response.data 
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.message || 'Request failed',
+        errors: error.response?.data?.errors
+      }
+    }
   },
 }
 

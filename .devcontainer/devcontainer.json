@@ -1,0 +1,32 @@
+{
+  "name": "Whiteboard Backend Dev Container",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "backend",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "python.analysis.autoSearchPaths": true,
+        "python.analysis.autoImportCompletions": true,
+        "files.associations": {
+          "*.py": "python"
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.flake8",
+        "ms-python.black-formatter",
+        "ms-python.pylint",
+        "charliermarsh.ruff"
+      ]
+    }
+  },
+  "postCreateCommand": "pip install -e .",
+  "remoteUser": "root"
+}

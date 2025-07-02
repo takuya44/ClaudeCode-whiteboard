@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import type { User, AuthState } from '@/types'
+import { authApi } from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -12,13 +13,20 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (email: string, password: string) => {
     isLoading.value = true
     try {
-      // TODO: API call to login endpoint
-      // const response = await api.post('/auth/login', { email, password })
-      // user.value = response.data.user
-      // token.value = response.data.token
-      // localStorage.setItem('auth_token', token.value)
+      const response = await authApi.login({ email, password })
       
-      console.log('Login attempt:', { email, password })
+      if (!response.success) {
+        throw new Error(response.message || 'Login failed')
+      }
+      
+      // バックエンドから返されるのは access_token なので、それを token として扱う
+      token.value = response.data.access_token
+      localStorage.setItem('auth_token', token.value)
+      
+      // ユーザー情報を取得
+      await getCurrentUser()
+      
+      console.log('Login successful:', { email })
     } catch (error) {
       console.error('Login error:', error)
       throw error
@@ -33,16 +41,36 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('auth_token')
   }
 
-  const register = async (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const getCurrentUser = async () => {
+    if (!token.value) return
+    
+    try {
+      const response = await authApi.me()
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to get user info')
+      }
+      
+      user.value = response.data
+    } catch (error) {
+      console.error('Get current user error:', error)
+      logout()
+      throw error
+    }
+  }
+
+  const register = async (userData: { name: string; email: string; password: string }) => {
     isLoading.value = true
     try {
-      // TODO: API call to register endpoint
-      // const response = await api.post('/auth/register', userData)
-      // user.value = response.data.user
-      // token.value = response.data.token
-      // localStorage.setItem('auth_token', token.value)
+      const response = await authApi.register(userData)
       
-      console.log('Register attempt:', userData)
+      // ユーザー登録後は自動的にユーザー情報が返される
+      user.value = response.data
+      
+      // 登録後は自動ログインをする場合
+      // await login(userData.email, userData.password)
+      
+      console.log('Register successful:', userData)
     } catch (error) {
       console.error('Register error:', error)
       throw error
@@ -59,11 +87,8 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = true
     
     try {
-      // TODO: API call to verify token and get user data
-      // const response = await api.get('/auth/me')
-      // user.value = response.data
-      
-      console.log('Checking auth with token:', storedToken)
+      await getCurrentUser()
+      console.log('Auth check successful')
     } catch (error) {
       console.error('Auth check error:', error)
       logout()
