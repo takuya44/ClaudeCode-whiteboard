@@ -7,6 +7,7 @@
 ```
 docs/
 ├── README.md                    # このファイル（ドキュメント索引）
+├── progress-summary.md          # 🔥 プロジェクト進捗サマリー（全体状況把握）
 ├── requirements/                # 要件定義
 │   ├── requirements.md         # メイン要件定義書
 │   ├── functional.md           # 機能要件詳細
@@ -37,6 +38,11 @@ docs/
 ```
 
 ## 📋 ドキュメント一覧
+
+### 🔥 プロジェクト進捗
+| ファイル | 説明 | 最終更新 |
+|---------|------|----------|
+| [progress-summary.md](./progress-summary.md) | **プロジェクト全体の進捗状況と成果物サマリー** | 2025-07-01 |
 
 ### 要件定義 (requirements/)
 | ファイル | 説明 | 最終更新 |
@@ -113,10 +119,11 @@ docs/
 ## 🔍 検索・参照方法
 
 ### よく参照されるドキュメント
-1. **開発開始時**: [requirements.md](./requirements/requirements.md)
-2. **環境構築時**: [../README.md](../README.md) または [docker-setup.md](./development/docker-setup.md)
-3. **Docker起動問題**: [docker-setup.md](./development/docker-setup.md) 🔥**最重要**
-4. **デプロイ時**: [deployment.md](./deployment/deployment.md)
+1. **プロジェクト状況確認**: [progress-summary.md](./progress-summary.md) 🔥**最重要**
+2. **開発開始時**: [requirements.md](./requirements/requirements.md)
+3. **環境構築時**: [../README.md](../README.md) または [docker-setup.md](./development/docker-setup.md)
+4. **Docker起動問題**: [docker-setup.md](./development/docker-setup.md)
+5. **デプロイ時**: [deployment.md](./deployment/deployment.md)
 
 ### ドキュメント検索
 ```bash
