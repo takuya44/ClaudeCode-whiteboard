@@ -11,7 +11,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
 from app.models.user import User
 from app.schemas.auth import Token, Login
-from app.schemas.user import User as UserSchema, UserCreate
+from app.schemas.user import User as UserSchema, UserCreate, UserUpdate
 
 router = APIRouter()
 
@@ -126,19 +126,18 @@ def update_user_profile(
     *,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    name: str | None = None,
-    avatar: str | None = None,
-    password: str | None = None,
+    profile_update: UserUpdate,
 ) -> Any:
     """
     ユーザープロフィール更新
     """
-    if name:
-        setattr(current_user, 'name', name)
-    if avatar is not None:
-        setattr(current_user, 'avatar', avatar)
-    if password:
-        setattr(current_user, 'password_hash', security.get_password_hash(password))
+    # 更新する値のみを設定
+    if profile_update.name is not None:
+        setattr(current_user, 'name', profile_update.name)
+    if profile_update.avatar is not None:
+        setattr(current_user, 'avatar', profile_update.avatar)
+    if profile_update.password is not None:
+        setattr(current_user, 'password_hash', security.get_password_hash(profile_update.password))
 
     db.add(current_user)
     db.commit()

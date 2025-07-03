@@ -102,12 +102,14 @@ export const useAuthStore = defineStore('auth', () => {
 
     isLoading.value = true
     try {
-      // TODO: API call to update profile
-      // const response = await api.put('/auth/profile', userData)
-      // user.value = { ...user.value, ...response.data }
+      const response = await authApi.updateProfile(userData)
       
-      user.value = { ...user.value, ...userData }
-      console.log('Profile update:', userData)
+      if (!response.success) {
+        throw new Error(response.message || 'Profile update failed')
+      }
+      
+      user.value = { ...user.value, ...response.data }
+      console.log('Profile update successful:', userData)
     } catch (error) {
       console.error('Profile update error:', error)
       throw error
