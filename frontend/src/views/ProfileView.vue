@@ -50,6 +50,63 @@
               <h3 class="text-lg font-medium text-gray-900 mb-4">
                 パスワード変更
               </h3>
+              
+              <!-- エラーメッセージ表示 -->
+              <div
+                v-if="passwordErrors.general"
+                class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg
+                      class="h-5 w-5 text-red-400"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm text-red-600">
+                      {{ passwordErrors.general }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 成功メッセージ表示 -->
+              <div
+                v-if="passwordChangeSuccess"
+                class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg"
+              >
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg
+                      class="h-5 w-5 text-green-400"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm text-green-600">
+                      パスワードが正常に変更されました
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               <form @submit.prevent="handleChangePassword">
                 <div class="space-y-4">
                   <BaseInput
@@ -102,6 +159,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { authApi } from '@/api/auth'
 import { BaseInput, BaseButton } from '@/components/ui'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
@@ -124,6 +182,7 @@ const passwordForm = reactive({
 
 const errors = ref<Record<string, string>>({})
 const passwordErrors = ref<Record<string, string>>({})
+const passwordChangeSuccess = ref(false)
 
 const validateProfile = () => {
   errors.value = {}
@@ -188,23 +247,86 @@ const handleChangePassword = async () => {
   if (!validatePassword()) return
   
   isPasswordLoading.value = true
+  passwordErrors.value = {}
+  passwordChangeSuccess.value = false
   
   try {
-    // TODO: Implement password change API call
-    console.log('Password change request:', {
+    const response = await authApi.changePassword({
       currentPassword: passwordForm.currentPassword,
       newPassword: passwordForm.newPassword,
     })
     
-    // Reset form on success
-    passwordForm.currentPassword = ''
-    passwordForm.newPassword = ''
-    passwordForm.confirmNewPassword = ''
-    
-    console.log('Password changed successfully')
-  } catch (error) {
+    if (response.success) {
+      // Reset form on success
+      passwordForm.currentPassword = ''
+      passwordForm.newPassword = ''
+      passwordForm.confirmNewPassword = ''
+      passwordChangeSuccess.value = true
+      
+      // 3秒後に成功メッセージを非表示
+      setTimeout(() => {
+        passwordChangeSuccess.value = false
+      }, 3000)
+    }
+  } catch (error: any) {
     console.error('Password change failed:', error)
-    passwordErrors.value.general = 'パスワード変更に失敗しました。もう一度お試しください。'
+    
+    // レスポンスからエラー情報を取得
+    const errorDetail = error.response?.data?.detail || error.message
+    const status = error.response?.status
+    
+    // HTTPステータスコードに基づくエラーハンドリング
+    switch (status) {
+      case 400:
+        // バリデーションエラー
+        if (errorDetail.includes('Incorrect current password')) {
+          passwordErrors.value.currentPassword = '現在のパスワードが正しくありません'
+        } else if (errorDetail.includes('must be different')) {
+          passwordErrors.value.newPassword = '新しいパスワードは現在のパスワードと異なる必要があります'
+        } else {
+          passwordErrors.value.general = errorDetail
+        }
+        break
+      
+      case 401:
+        // 認証エラー
+        passwordErrors.value.general = 'セッションが期限切れです。再度ログインしてください。'
+        // 3秒後にログイン画面へリダイレクト
+        setTimeout(() => {
+          authStore.logout()
+        }, 3000)
+        break
+        
+      case 422:
+        // バリデーションエラー（フィールドレベル）
+        if (error.response?.data?.detail?.errors) {
+          const errors = error.response.data.detail.errors
+          if (errors.currentPassword) {
+            passwordErrors.value.currentPassword = errors.currentPassword[0]
+          }
+          if (errors.newPassword) {
+            passwordErrors.value.newPassword = errors.newPassword[0]
+          }
+        } else {
+          passwordErrors.value.general = 'パスワードは8文字以上で入力してください'
+        }
+        break
+        
+      case 500:
+      case 502:
+      case 503:
+        // サーバーエラー
+        passwordErrors.value.general = 'サーバーエラーが発生しました。しばらく待ってから再試行してください。'
+        break
+        
+      default:
+        // ネットワークエラーなど
+        if (!navigator.onLine) {
+          passwordErrors.value.general = 'インターネット接続を確認してください。'
+        } else {
+          passwordErrors.value.general = 'エラーが発生しました。もう一度お試しください。'
+        }
+    }
   } finally {
     isPasswordLoading.value = false
   }

@@ -10,7 +10,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
 from app.models.user import User
-from app.schemas.auth import Token, Login
+from app.schemas.auth import Token, Login, PasswordChange
 from app.schemas.user import User as UserSchema, UserCreate, UserUpdate
 
 router = APIRouter()
@@ -143,3 +143,37 @@ def update_user_profile(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.post("/change-password", response_model=dict)
+def change_password(
+    *,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    password_data: PasswordChange,
+) -> Any:
+    """
+    パスワード変更
+    """
+    # 現在のパスワードを検証
+    if not security.verify_password(
+        password_data.current_password, str(current_user.password_hash)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect current password",
+        )
+
+    # 新しいパスワードと現在のパスワードが同じでないことを確認
+    if password_data.current_password == password_data.new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password",
+        )
+
+    # パスワードを更新
+    setattr(current_user, 'password_hash', security.get_password_hash(password_data.new_password))
+    db.add(current_user)
+    db.commit()
+
+    return {"message": "Password changed successfully"}

@@ -40,82 +40,42 @@ api.interceptors.response.use(
 
 export const apiRequest = {
   async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    try {
-      const response = await api.get(url, config)
-      return { 
-        success: true, 
-        data: response.data 
-      }
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.response?.data?.detail || error.message || 'Request failed',
-        errors: error.response?.data?.errors
-      }
+    const response = await api.get(url, config)
+    return { 
+      success: true, 
+      data: response.data 
     }
   },
   
   async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    try {
-      const response = await api.post(url, data, config)
-      return { 
-        success: true, 
-        data: response.data 
-      }
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.response?.data?.detail || error.message || 'Request failed',
-        errors: error.response?.data?.errors
-      }
+    const response = await api.post(url, data, config)
+    return { 
+      success: true, 
+      data: response.data 
     }
   },
   
   async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    try {
-      const response = await api.put(url, data, config)
-      return { 
-        success: true, 
-        data: response.data 
-      }
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.response?.data?.detail || error.message || 'Request failed',
-        errors: error.response?.data?.errors
-      }
+    const response = await api.put(url, data, config)
+    return { 
+      success: true, 
+      data: response.data 
     }
   },
   
   async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    try {
-      const response = await api.patch(url, data, config)
-      return { 
-        success: true, 
-        data: response.data 
-      }
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.response?.data?.detail || error.message || 'Request failed',
-        errors: error.response?.data?.errors
-      }
+    const response = await api.patch(url, data, config)
+    return { 
+      success: true, 
+      data: response.data 
     }
   },
   
   async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    try {
-      const response = await api.delete(url, config)
-      return { 
-        success: true, 
-        data: response.data 
-      }
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.response?.data?.detail || error.message || 'Request failed',
-        errors: error.response?.data?.errors
-      }
+    const response = await api.delete(url, config)
+    return { 
+      success: true, 
+      data: response.data 
     }
   },
 }
