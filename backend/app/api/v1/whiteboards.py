@@ -1,8 +1,9 @@
 """Whiteboard management API endpoints."""
 from typing import Any, List
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from uuid import UUID
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
@@ -14,7 +15,8 @@ from app.schemas.whiteboard import (
     WhiteboardCreate,
     WhiteboardUpdate,
     WhiteboardShare,
-    WhiteboardPermissionUpdate
+    WhiteboardPermissionUpdate,
+    WhiteboardCollaboratorResponse
 )
 from app.schemas.user import User as UserSchema
 
@@ -198,39 +200,64 @@ def share_whiteboard(
             detail="Only owner or admin can share whiteboard"
         )
 
-    # 共有先ユーザーを検索
-    user_to_share = db.query(User).filter(
-        User.email == share_request.user_email
-    ).first()
+    shared_users = []
+    failed_users = []
 
-    if not user_to_share:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+    # 複数のユーザーに対して共有処理
+    for user_email in share_request.user_emails:
+        # 共有先ユーザーを検索
+        user_to_share = db.query(User).filter(
+            User.email == user_email
+        ).first()
+
+        if not user_to_share:
+            failed_users.append({
+                "email": user_email,
+                "error": "User not found"
+            })
+            continue
+
+        # 既に共有されているかチェック
+        existing_collaboration = db.query(WhiteboardCollaborator).filter(
+            WhiteboardCollaborator.whiteboard_id == whiteboard_id,
+            WhiteboardCollaborator.user_id == user_to_share.id
+        ).first()
+
+        if existing_collaboration:
+            failed_users.append({
+                "email": user_email,
+                "error": "User already has access to this whiteboard"
+            })
+            continue
+
+        # 共有を作成
+        collaboration = WhiteboardCollaborator(
+            whiteboard_id=whiteboard_id,
+            user_id=user_to_share.id,
+            permission=Permission(share_request.permission)
         )
+        db.add(collaboration)
+        shared_users.append({
+            "email": user_email,
+            "user_id": str(user_to_share.id),
+            "permission": share_request.permission
+        })
 
-    # 既に共有されているかチェック
-    existing_collaboration = db.query(WhiteboardCollaborator).filter(
-        WhiteboardCollaborator.whiteboard_id == whiteboard_id,
-        WhiteboardCollaborator.user_id == user_to_share.id
-    ).first()
-
-    if existing_collaboration:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already has access to this whiteboard"
-        )
-
-    # 共有を作成
-    collaboration = WhiteboardCollaborator(
-        whiteboard_id=whiteboard_id,
-        user_id=user_to_share.id,
-        permission=Permission(share_request.permission)
-    )
-    db.add(collaboration)
     db.commit()
 
-    return {"detail": "Whiteboard shared successfully"}
+    # 結果を返す
+    if len(shared_users) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No users could be shared",
+            headers={"X-Failed-Users": str(failed_users)}
+        )
+
+    return {
+        "detail": "Whiteboard shared successfully",
+        "shared_users": shared_users,
+        "failed_users": failed_users
+    }
 
 
 @router.get("/{whiteboard_id}/users", response_model=List[UserSchema])
@@ -323,6 +350,112 @@ def update_whiteboard_permissions(
     return {"detail": "Permission updated successfully"}
 
 
+@router.get("/{whiteboard_id}/collaborators", response_model=List[WhiteboardCollaboratorResponse])
+def get_whiteboard_collaborators(
+    *,
+    db: Session = Depends(get_db),
+    whiteboard_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+) -> Any:
+    """
+    ホワイトボードのコラボレーター一覧を取得
+    """
+    whiteboard = db.query(Whiteboard).filter(
+        Whiteboard.id == whiteboard_id
+    ).first()
+
+    if not whiteboard:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Whiteboard not found"
+        )
+
+    # アクセス権限チェック
+    if not _has_whiteboard_access(db, whiteboard, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+
+    # コラボレーター一覧を取得
+    collaborators = db.query(
+        WhiteboardCollaborator.user_id,
+        User.name.label('user_name'),
+        User.email.label('user_email'),
+        WhiteboardCollaborator.permission,
+        WhiteboardCollaborator.joined_at
+    ).join(User).filter(
+        WhiteboardCollaborator.whiteboard_id == whiteboard_id
+    ).all()
+
+    # レスポンス形式に変換
+    collaborator_responses = []
+    for collab in collaborators:
+        collaborator_responses.append(WhiteboardCollaboratorResponse(
+            user_id=str(collab.user_id),
+            user_name=collab.user_name,
+            user_email=collab.user_email,
+            permission=collab.permission.value,
+            joined_at=collab.joined_at
+        ))
+
+    return collaborator_responses
+
+
+@router.delete("/{whiteboard_id}/collaborators/{user_id}")
+def remove_whiteboard_collaborator(
+    *,
+    db: Session = Depends(get_db),
+    whiteboard_id: UUID,
+    user_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+) -> Any:
+    """
+    ホワイトボードからコラボレーターを削除
+    """
+    whiteboard = db.query(Whiteboard).filter(
+        Whiteboard.id == whiteboard_id
+    ).first()
+
+    if not whiteboard:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Whiteboard not found"
+        )
+
+    # 管理者権限チェック
+    if not _has_whiteboard_admin_permission(db, whiteboard, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only owner or admin can remove collaborators"
+        )
+
+    # 対象のコラボレーションを検索
+    collaboration = db.query(WhiteboardCollaborator).filter(
+        WhiteboardCollaborator.whiteboard_id == whiteboard_id,
+        WhiteboardCollaborator.user_id == user_id
+    ).first()
+
+    if not collaboration:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Collaborator not found"
+        )
+
+    # オーナーは削除できない
+    if str(whiteboard.owner_id) == str(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot remove the owner from collaborators"
+        )
+
+    # コラボレーターを削除
+    db.delete(collaboration)
+    db.commit()
+
+    return {"detail": "Collaborator removed successfully"}
+
+
 # ヘルパー関数
 
 def _has_whiteboard_access(db: Session, whiteboard: Whiteboard, user: User) -> bool:
@@ -348,7 +481,9 @@ def _has_whiteboard_edit_permission(db: Session, whiteboard: Whiteboard, user: U
         WhiteboardCollaborator.user_id == user.id
     ).first()
 
-    return collaboration and getattr(collaboration, 'permission', None) in [Permission.EDIT, Permission.ADMIN]
+    return (collaboration and
+            getattr(collaboration, 'permission', None) in [Permission.EDIT,
+                                                           Permission.ADMIN])
 
 
 def _has_whiteboard_admin_permission(db: Session, whiteboard: Whiteboard, user: User) -> bool:
@@ -361,4 +496,5 @@ def _has_whiteboard_admin_permission(db: Session, whiteboard: Whiteboard, user: 
         WhiteboardCollaborator.user_id == user.id
     ).first()
 
-    return collaboration and getattr(collaboration, 'permission', None) == Permission.ADMIN
+    return (collaboration and
+            getattr(collaboration, 'permission', None) == Permission.ADMIN)
