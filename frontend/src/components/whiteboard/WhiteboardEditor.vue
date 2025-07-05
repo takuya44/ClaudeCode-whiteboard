@@ -115,6 +115,40 @@
         </div>
 
         <div class="flex items-center space-x-4">
+          <!-- Collaborators button -->
+          <button
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            @click="handleManageCollaborators"
+          >
+            <svg 
+              class="w-4 h-4 mr-2 inline" 
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path 
+                d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" 
+              />
+            </svg>
+            メンバー
+          </button>
+
+          <!-- Share button -->
+          <button
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            @click="handleShare"
+          >
+            <svg 
+              class="w-4 h-4 mr-2 inline" 
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path 
+                d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" 
+              />
+            </svg>
+            共有
+          </button>
+
           <!-- Zoom controls -->
           <div class="flex items-center space-x-2">
             <button
@@ -170,16 +204,34 @@
         </div>
       </div>
     </div>
+
+    <!-- Share Dialog -->
+    <WhiteboardShareDialog
+      :show="showShareDialog"
+      :whiteboard="whiteboard"
+      @close="showShareDialog = false"
+      @shared="handleShared"
+    />
+
+    <!-- Collaborator Management Dialog -->
+    <CollaboratorManagementDialog
+      :show="showCollaboratorDialog"
+      :whiteboard="whiteboard"
+      @close="showCollaboratorDialog = false"
+      @open-share="handleOpenShareFromCollaborator"
+      @collaborator-removed="handleCollaboratorRemoved"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import DrawingToolbar from './DrawingToolbar.vue'
 import WhiteboardCanvas from './WhiteboardCanvas.vue'
+import WhiteboardShareDialog from './WhiteboardShareDialog.vue'
+import CollaboratorManagementDialog from './CollaboratorManagementDialog.vue'
 import type { DrawingTool, DrawingElement, Whiteboard, User } from '@/types'
-import { useWhiteboardStore } from '@/stores/whiteboard'
 
 interface Props {
   whiteboardId?: string
@@ -187,9 +239,6 @@ interface Props {
 
 const props = defineProps<Props>()
 const route = useRoute()
-
-// Store
-const whiteboardStore = useWhiteboardStore()
 
 // Refs
 const canvasRef = ref<InstanceType<typeof WhiteboardCanvas> | null>(null)
@@ -208,6 +257,8 @@ const elementCount = ref(0)
 const onlineUserCount = ref(0)
 const isConnected = ref(false)
 const isSaving = ref(false)
+const showShareDialog = ref(false)
+const showCollaboratorDialog = ref(false)
 
 // Canvas settings
 const canvasWidth = ref(1200)
@@ -314,6 +365,29 @@ const resetView = () => {
   panY.value = 0
 }
 
+const handleShare = () => {
+  showShareDialog.value = true
+}
+
+const handleShared = (results: any) => {
+  console.log('Whiteboard shared:', results)
+  // 共有成功のフィードバックを表示するなどの処理
+}
+
+const handleManageCollaborators = () => {
+  showCollaboratorDialog.value = true
+}
+
+const handleOpenShareFromCollaborator = () => {
+  showCollaboratorDialog.value = false
+  showShareDialog.value = true
+}
+
+const handleCollaboratorRemoved = (collaborator: any) => {
+  console.log('Collaborator removed:', collaborator)
+  // コラボレーター削除後の処理（通知表示など）
+}
+
 // Keyboard shortcuts
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.ctrlKey || e.metaKey) {
@@ -356,7 +430,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 }
 
 // Watch for tool changes
-watch(currentTool, (newTool) => {
+watch(currentTool, () => {
   // Tool changes will be handled by the canvas component through props
 }, { deep: true })
 
