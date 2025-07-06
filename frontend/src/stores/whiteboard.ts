@@ -32,21 +32,40 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
       const response = await whiteboardApi.getWhiteboards(page, perPage)
       
       if (response.success && response.data) {
+        // Backend returns array directly, not paginated response
+        const whiteboardsData = Array.isArray(response.data) ? response.data : (response.data.data || [])
+        
         // If it's the first page, replace the entire array
         if (page === 1) {
-          whiteboards.value = response.data.data
+          whiteboards.value = whiteboardsData
         } else {
           // If it's a subsequent page, append to the existing array
-          whiteboards.value.push(...response.data.data)
+          whiteboards.value.push(...whiteboardsData)
         }
         
-        return response.data
+        // Return compatible format
+        return {
+          data: whiteboardsData,
+          total: whiteboardsData.length,
+          page,
+          perPage
+        }
       } else {
-        throw new Error(response.message || 'Failed to fetch whiteboards')
+        // Handle case where response is not successful
+        console.warn('API request failed:', response.message)
+        if (page === 1) {
+          whiteboards.value = []
+        }
+        return { data: [], total: 0, page, perPage }
       }
     } catch (error) {
       console.error('Fetch whiteboards error:', error)
-      throw error
+      // Ensure whiteboards is always an array even on error
+      if (page === 1) {
+        whiteboards.value = []
+      }
+      // Don't throw error, return empty result instead
+      return { data: [], total: 0, page, perPage }
     } finally {
       isLoading.value = false
     }

@@ -39,7 +39,7 @@
       </div>
 
       <div
-        v-else-if="whiteboards.length === 0"
+        v-else-if="!whiteboards || whiteboards.length === 0"
         class="text-center py-12"
       >
         <svg
@@ -68,7 +68,7 @@
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
         <div
-          v-for="whiteboard in whiteboards"
+          v-for="whiteboard in (whiteboards || [])"
           :key="whiteboard.id"
           class="bg-white rounded-lg shadow-soft hover:shadow-medium transition-shadow cursor-pointer"
           @click="openWhiteboard(whiteboard.id)"
@@ -158,7 +158,7 @@ const newWhiteboard = reactive({
 })
 
 const user = computed(() => authStore.user)
-const whiteboards = computed(() => whiteboardStore.whiteboards)
+const whiteboards = computed(() => whiteboardStore.whiteboards || [])
 const isLoading = computed(() => whiteboardStore.isLoading)
 
 const formatDate = (dateString: string) => {
@@ -188,7 +188,12 @@ const handleCreateWhiteboard = async () => {
   }
 }
 
-onMounted(() => {
-  whiteboardStore.fetchWhiteboards()
+onMounted(async () => {
+  try {
+    await whiteboardStore.fetchWhiteboards()
+  } catch (error) {
+    console.error('Failed to load whiteboards:', error)
+    // Error is already handled in store, no need to throw
+  }
 })
 </script>
