@@ -55,16 +55,22 @@ async def health_check():
 # APIルーターを登録
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+# 簡単なWebSocketテストエンドポイント
+@app.websocket("/ws/test")
+async def websocket_test(websocket: WebSocket):
+    """WebSocketテストエンドポイント"""
+    await websocket.accept()
+    await websocket.send_text("Hello WebSocket!")
+    await websocket.close()
+
 # WebSocketエンドポイントを登録
 @app.websocket("/ws/{whiteboard_id}")
 async def websocket_route(
     websocket: WebSocket,
-    whiteboard_id: str,
-    user_id: str | None = None,
-    token: str | None = None
+    whiteboard_id: str
 ):
     """WebSocketエンドポイント"""
-    await websocket_endpoint(websocket, whiteboard_id, user_id, token)
+    await websocket_endpoint(websocket, whiteboard_id)
 
 if __name__ == "__main__":
     import uvicorn

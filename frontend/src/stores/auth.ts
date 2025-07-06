@@ -20,8 +20,12 @@ export const useAuthStore = defineStore('auth', () => {
       }
       
       // バックエンドから返されるのは access_token なので、それを token として扱う
-      token.value = response.data.access_token
-      localStorage.setItem('auth_token', token.value)
+      if (response.data?.access_token) {
+        token.value = response.data.access_token
+        localStorage.setItem('auth_token', token.value)
+      } else {
+        throw new Error('Access token not received')
+      }
       
       // ユーザー情報を取得
       await getCurrentUser()
@@ -51,7 +55,9 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error(response.message || 'Failed to get user info')
       }
       
-      user.value = response.data
+      if (response.data) {
+        user.value = response.data
+      }
     } catch (error) {
       console.error('Get current user error:', error)
       logout()
@@ -65,7 +71,11 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authApi.register(userData)
       
       // ユーザー登録後は自動的にユーザー情報が返される
-      user.value = response.data
+      if (response.data?.user) {
+        user.value = response.data.user
+      } else {
+        throw new Error('User data not received after registration')
+      }
       
       // 登録後は自動ログインをする場合
       // await login(userData.email, userData.password)

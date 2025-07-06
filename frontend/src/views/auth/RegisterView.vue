@@ -157,7 +157,7 @@ const handleSubmit = async () => {
     await authStore.register({
       name: form.name,
       email: form.email,
-      role: 'user'
+      password: form.password
     })
     
     router.push('/dashboard')

@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import type { Whiteboard, DrawingElement } from '@/types'
 import { whiteboardApi } from '@/api/whiteboard'
+import { useWebSocket } from '@/composables/useWebSocket'
+import { useAuthStore } from '@/stores/auth'
 
 export const useWhiteboardStore = defineStore('whiteboard', () => {
   const whiteboards = ref<Whiteboard[]>([])
@@ -11,6 +13,13 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
   const selectedTool = ref<'pen' | 'rectangle' | 'circle' | 'text' | 'sticky' | 'eraser'>('pen')
   const selectedColor = ref('#000000')
   const strokeWidth = ref(2)
+
+  // WebSocket integration
+  const authStore = useAuthStore()
+  const webSocket = useWebSocket()
+  
+  // Track WebSocket connection state
+  const isWebSocketConnected = ref(false)
 
   const currentWhiteboardElements = computed(() => {
     if (!currentWhiteboard.value) return []
@@ -63,11 +72,33 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     }
   }
 
-  const setCurrentWhiteboard = (whiteboard: Whiteboard | null) => {
+  const setCurrentWhiteboard = async (whiteboard: Whiteboard | null) => {
+    // Disconnect from previous whiteboard if connected
+    if (isWebSocketConnected.value) {
+      webSocket.disconnect()
+      isWebSocketConnected.value = false
+    }
+
     currentWhiteboard.value = whiteboard
     if (whiteboard) {
-      // TODO: Load drawing elements for this whiteboard
-      loadDrawingElements(whiteboard.id)
+      // Load drawing elements for this whiteboard
+      await loadDrawingElements(whiteboard.id)
+      
+      // Connect to WebSocket for real-time collaboration
+      if (authStore.user) {
+        try {
+          await webSocket.connect(whiteboard.id, authStore.user.id)
+          isWebSocketConnected.value = true
+          
+          // Setup WebSocket message handlers for this whiteboard
+          setupWebSocketHandlers()
+          
+          // Send user join notification
+          webSocket.sendUserJoin(authStore.user.id, authStore.user.name)
+        } catch (error) {
+          console.error('Failed to connect to WebSocket:', error)
+        }
+      }
     }
   }
 
@@ -99,8 +130,10 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     
     drawingElements.value.push(newElement)
     
-    // TODO: Send to WebSocket for real-time sync
-    console.log('Adding drawing element:', newElement)
+    // Send to WebSocket for real-time sync
+    if (isWebSocketConnected.value && authStore.user) {
+      webSocket.sendDrawingUpdate(newElement, authStore.user.id)
+    }
     
     return newElement
   }
@@ -108,36 +141,60 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
   const updateDrawingElement = (elementId: string, updates: Partial<DrawingElement>) => {
     const elementIndex = drawingElements.value.findIndex(el => el.id === elementId)
     if (elementIndex !== -1) {
-      drawingElements.value[elementIndex] = {
+      const updatedElement = {
         ...drawingElements.value[elementIndex],
         ...updates,
         updatedAt: new Date().toISOString(),
       }
       
-      // TODO: Send to WebSocket for real-time sync
-      console.log('Updating drawing element:', elementId, updates)
+      drawingElements.value[elementIndex] = updatedElement
+      
+      // Send to WebSocket for real-time sync
+      if (isWebSocketConnected.value && authStore.user) {
+        webSocket.sendDrawingUpdate(updatedElement, authStore.user.id)
+      }
     }
   }
 
   const removeDrawingElement = (elementId: string) => {
     const elementIndex = drawingElements.value.findIndex(el => el.id === elementId)
     if (elementIndex !== -1) {
+      const removedElement = drawingElements.value[elementIndex]
       drawingElements.value.splice(elementIndex, 1)
       
-      // TODO: Send to WebSocket for real-time sync
-      console.log('Removing drawing element:', elementId)
+      // Send to WebSocket for real-time sync
+      if (isWebSocketConnected.value && authStore.user) {
+        webSocket.sendMessage({
+          type: 'erase',
+          data: { elementId, element: removedElement },
+          userId: authStore.user.id,
+          timestamp: new Date().toISOString()
+        })
+      }
     }
   }
 
   const clearWhiteboard = () => {
     if (!currentWhiteboard.value) return
     
-    drawingElements.value = drawingElements.value.filter(
-      el => el.whiteboardId !== currentWhiteboard.value!.id
+    const whiteboardId = currentWhiteboard.value.id
+    const elementsToRemove = drawingElements.value.filter(
+      el => el.whiteboardId === whiteboardId
     )
     
-    // TODO: Send to WebSocket for real-time sync
-    console.log('Clearing whiteboard:', currentWhiteboard.value.id)
+    drawingElements.value = drawingElements.value.filter(
+      el => el.whiteboardId !== whiteboardId
+    )
+    
+    // Send to WebSocket for real-time sync
+    if (isWebSocketConnected.value && authStore.user) {
+      webSocket.sendMessage({
+        type: 'clear',
+        data: { whiteboardId, elementsRemoved: elementsToRemove },
+        userId: authStore.user.id,
+        timestamp: new Date().toISOString()
+      })
+    }
   }
 
   const setSelectedTool = (tool: typeof selectedTool.value) => {
@@ -201,6 +258,83 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     }
   }
 
+  // WebSocket message handlers
+  const setupWebSocketHandlers = () => {
+    // Handle incoming drawing updates
+    webSocket.onMessage('draw', (data: { element: DrawingElement }) => {
+      const { element } = data
+      
+      // Only add if it's not from the current user and element doesn't exist
+      if (element.userId !== authStore.user?.id) {
+        const existingIndex = drawingElements.value.findIndex(el => el.id === element.id)
+        
+        if (existingIndex === -1) {
+          // Add new element
+          drawingElements.value.push(element)
+        } else {
+          // Update existing element
+          drawingElements.value[existingIndex] = element
+        }
+      }
+    })
+
+    // Handle element removal
+    webSocket.onMessage('erase', (data: { elementId: string; element: DrawingElement }) => {
+      const { elementId } = data
+      
+      // Only remove if it's not from the current user
+      if (data.element?.userId !== authStore.user?.id) {
+        const elementIndex = drawingElements.value.findIndex(el => el.id === elementId)
+        if (elementIndex !== -1) {
+          drawingElements.value.splice(elementIndex, 1)
+        }
+      }
+    })
+
+    // Handle whiteboard clear
+    webSocket.onMessage('clear', (data: { whiteboardId: string; elementsRemoved: DrawingElement[] }) => {
+      const { whiteboardId } = data
+      
+      // Clear elements for this whiteboard (if it's the current one)
+      if (currentWhiteboard.value?.id === whiteboardId) {
+        drawingElements.value = drawingElements.value.filter(
+          el => el.whiteboardId !== whiteboardId
+        )
+      }
+    })
+
+    // Handle user presence
+    webSocket.onMessage('user_join', (data: { userId: string; userName: string }) => {
+      console.log(`User ${data.userName} joined the whiteboard`)
+      // TODO: Update online users list
+    })
+
+    webSocket.onMessage('user_leave', (data: { userId: string }) => {
+      console.log(`User ${data.userId} left the whiteboard`)
+      // TODO: Update online users list
+    })
+
+    // Handle cursor updates
+    webSocket.onMessage('cursor', (data: { x: number; y: number; userId: string }) => {
+      // TODO: Update other users' cursor positions
+      console.log(`User ${data.userId} cursor at:`, data.x, data.y)
+    })
+
+    // Handle pong response
+    webSocket.onMessage('pong', () => {
+      // WebSocket heartbeat response - connection is alive
+    })
+  }
+
+  // Disconnect WebSocket when leaving whiteboard
+  const disconnectWebSocket = () => {
+    if (isWebSocketConnected.value && authStore.user) {
+      webSocket.sendUserLeave(authStore.user.id)
+      webSocket.disconnect()
+      isWebSocketConnected.value = false
+    }
+  }
+
   return {
     whiteboards: readonly(whiteboards),
     currentWhiteboard: readonly(currentWhiteboard),
@@ -210,6 +344,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     selectedTool: readonly(selectedTool),
     selectedColor: readonly(selectedColor),
     strokeWidth: readonly(strokeWidth),
+    isWebSocketConnected: readonly(isWebSocketConnected),
     fetchWhiteboards,
     createWhiteboard,
     setCurrentWhiteboard,
@@ -224,5 +359,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     shareWhiteboard,
     getCollaborators,
     removeCollaborator,
+    disconnectWebSocket,
+    webSocket,
   }
 })

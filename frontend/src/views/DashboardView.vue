@@ -176,9 +176,7 @@ const handleCreateWhiteboard = async () => {
     await whiteboardStore.createWhiteboard({
       title: newWhiteboard.title,
       description: newWhiteboard.description,
-      isPublic: newWhiteboard.isPublic,
-      ownerId: user.value?.id || '',
-      collaborators: []
+      isPublic: newWhiteboard.isPublic
     })
     
     showCreateModal.value = false

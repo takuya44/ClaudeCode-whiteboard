@@ -1,14 +1,7 @@
 from fastapi import WebSocket, WebSocketDisconnect, status
-from jose import jwt, JWTError
-from uuid import UUID
 import json
 
 from app.core.database import get_db
-from app.core import security
-from app.core.config import settings
-from app.models.user import User
-from app.models.whiteboard import Whiteboard
-from app.models.collaborator import WhiteboardCollaborator
 from app.websocket.connection_manager import ConnectionManager
 from app.websocket.message_handler import MessageHandler
 
@@ -19,9 +12,7 @@ message_handler = MessageHandler(manager)
 
 async def websocket_endpoint(
     websocket: WebSocket,
-    whiteboard_id: str,
-    user_id: str | None = None,
-    token: str | None = None
+    whiteboard_id: str
 ):
     """
     WebSocketエンドポイント
@@ -29,100 +20,90 @@ async def websocket_endpoint(
     Args:
         websocket: WebSocket接続
         whiteboard_id: ホワイトボードID
-        user_id: ユーザーID（クエリパラメータ）
-        token: JWTトークン（クエリパラメータ）
+    
+    クエリパラメータ:
+        userId: ユーザーID
+        token: JWTトークン
     """
     # データベースセッションを取得
     db_generator = get_db()
     db = next(db_generator)
     
     try:
-        # 認証チェック
-        if not token or not user_id:
+        # WebSocketクエリパラメータを手動で解析
+        query_params = websocket.query_params
+        user_id_param = query_params.get('userId')
+        token = query_params.get('token')
+        
+        print(f"WebSocket connection attempt: whiteboard_id={whiteboard_id}, user_id={user_id_param}, token={token[:50] if token else None}...")
+        print(f"Query params - user_id type: {type(user_id_param)}, token type: {type(token)}")
+        
+        # user_idの型チェックとバリデーション
+        if not user_id_param:
+            print("Error: user_id is required")
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
         
-        # JWTトークンの検証
+        # str型に変換
+        user_id_str = str(user_id_param)
+        
+        print(f"WebSocket accepted for user {user_id_str} on whiteboard {whiteboard_id}")
+        
+        # 接続マネージャーを使用して接続を管理
+        await manager.connect(websocket, whiteboard_id, user_id_str)
+        
+        # 簡単なテストメッセージを送信
+        test_message = {
+            "type": "connection_success",
+            "data": {"message": "Connected successfully"},
+            "userId": user_id_str,
+            "timestamp": ""
+        }
+        await websocket.send_text(json.dumps(test_message))
+        
+        # 接続を維持
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[security.ALGORITHM])
-            token_user_id = payload.get("sub")
-            if token_user_id != user_id:
-                await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-                return
-        except JWTError:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-        
-        # ユーザーの存在確認
-        user = db.query(User).filter(User.id == UUID(user_id)).first()
-        if not user:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-        
-        # ホワイトボードの存在確認
-        whiteboard = db.query(Whiteboard).filter(
-            Whiteboard.id == UUID(whiteboard_id)
-        ).first()
-        if not whiteboard:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-        
-        # アクセス権限の確認
-        has_access = False
-        user_uuid = UUID(user_id)
-        if str(whiteboard.owner_id) == user_id:
-            has_access = True
-        elif bool(getattr(whiteboard, 'is_public', False)):
-            has_access = True
-        else:
-            collaboration = db.query(WhiteboardCollaborator).filter(
-                WhiteboardCollaborator.whiteboard_id == UUID(whiteboard_id),
-                WhiteboardCollaborator.user_id == user_uuid
-            ).first()
-            if collaboration:
-                has_access = True
-        
-        if not has_access:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-        
-        # 接続を受け入れ
-        await manager.connect(websocket, whiteboard_id, user_id)
-        
-        # メッセージ受信ループ
-        while True:
-            try:
+            while True:
                 data = await websocket.receive_text()
                 message = json.loads(data)
+                print(f"Received message: {message}")
                 
-                # メッセージを処理
-                await message_handler.handle_message(
-                    message, whiteboard_id, user_id, db
-                )
+                # メッセージハンドラーで処理
+                await message_handler.handle_message(message, whiteboard_id, user_id_str, db)
                 
-            except WebSocketDisconnect:
-                break
-            except json.JSONDecodeError:
-                print("Invalid JSON received")
-            except Exception as e:
-                print(f"Error processing message: {e}")
+        except WebSocketDisconnect:
+            print(f"WebSocket disconnected for user {user_id_str} on whiteboard {whiteboard_id}")
+        except Exception as e:
+            print(f"Message handling error: {e}")
+            # WebSocket接続を終了
+        finally:
+            # 接続マネージャーから切断
+            await manager.disconnect(websocket, whiteboard_id, user_id_str)
+        
+        return
     
     except Exception as e:
         print(f"WebSocket error: {e}")
         try:
             await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
-        except:
-            pass
+        except Exception as close_error:
+            print(f"Error closing WebSocket: {close_error}")
     
     finally:
         # 切断処理
-        if user_id:
-            await manager.disconnect(websocket, whiteboard_id, user_id)
+        try:
+            # user_id_strが定義されている場合のみ切断処理
+            if 'user_id_str' in locals():
+                await manager.disconnect(websocket, whiteboard_id, user_id_str)
+        except Exception as e:
+            print(f"Error during disconnect: {e}")
+        
         # データベースセッションをクローズ
         try:
-            db.close()
-        except:
-            pass
+            if hasattr(db, 'close'):
+                db.close()
+        except Exception as db_error:
+            print(f"Error closing database session: {db_error}")
 
 
 def get_connection_manager() -> ConnectionManager:

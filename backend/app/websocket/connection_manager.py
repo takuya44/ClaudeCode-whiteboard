@@ -46,7 +46,7 @@ class ConnectionManager:
                 "type": "user_join",
                 "data": {
                     "userId": user_id,
-                    "timestamp": json.loads(json.dumps(str(UUID(user_id))))
+                    "timestamp": ""
                 },
                 "userId": user_id,
                 "timestamp": ""
@@ -65,7 +65,8 @@ class ConnectionManager:
         """
         # ホワイトボードの接続リストから削除
         if whiteboard_id in self.active_connections:
-            self.active_connections[whiteboard_id].remove(websocket)
+            if websocket in self.active_connections[whiteboard_id]:
+                self.active_connections[whiteboard_id].remove(websocket)
             if not self.active_connections[whiteboard_id]:
                 del self.active_connections[whiteboard_id]
         
@@ -86,7 +87,7 @@ class ConnectionManager:
                 "type": "user_leave",
                 "data": {
                     "userId": user_id,
-                    "timestamp": json.loads(json.dumps(str(UUID(user_id))))
+                    "timestamp": ""
                 },
                 "userId": user_id,
                 "timestamp": ""

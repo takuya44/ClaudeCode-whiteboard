@@ -77,7 +77,7 @@ export interface DrawingEvent {
 }
 
 export interface WebSocketMessage {
-  type: 'draw' | 'erase' | 'cursor' | 'user_join' | 'user_leave' | 'ping' | 'pong' | 'drawing_event'
+  type: 'draw' | 'erase' | 'clear' | 'cursor' | 'user_join' | 'user_leave' | 'ping' | 'pong' | 'drawing_event'
   data: any
   userId: string
   timestamp: string

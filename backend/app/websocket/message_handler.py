@@ -61,63 +61,16 @@ class MessageHandler:
             user_id: ユーザーID
             db: データベースセッション
         """
-        element_data = message.get("data", {}).get("element", {})
+        print(f"Handling drawing update from user {user_id} on whiteboard {whiteboard_id}")
         
-        # データベースに保存
-        element = DrawingElement(
-            whiteboard_id=UUID(whiteboard_id),
-            user_id=UUID(user_id),
-            type=DrawingType(element_data.get("type")),
-            x=element_data.get("x", 0),
-            y=element_data.get("y", 0),
-            width=element_data.get("width"),
-            height=element_data.get("height"),
-            end_x=element_data.get("endX"),
-            end_y=element_data.get("endY"),
-            points=element_data.get("points"),
-            color=element_data.get("color", "#000000"),
-            stroke_width=element_data.get("strokeWidth"),
-            fill_color=element_data.get("fill"),
-            text_content=element_data.get("text"),
-            font_size=element_data.get("fontSize"),
-            font_family=element_data.get("fontFamily")
-        )
-        
-        db.add(element)
-        db.commit()
-        db.refresh(element)
-        
-        # 他のユーザーにブロードキャスト
-        broadcast_message = {
-            "type": "draw",
-            "data": {
-                "element": {
-                    "id": str(element.id),
-                    "type": element.type.value,
-                    "x": element.x,
-                    "y": element.y,
-                    "width": element.width,
-                    "height": element.height,
-                    "endX": element.end_x,
-                    "endY": element.end_y,
-                    "points": element.points,
-                    "color": element.color,
-                    "strokeWidth": element.stroke_width,
-                    "fill": element.fill_color,
-                    "text": element.text_content,
-                    "fontSize": element.font_size,
-                    "fontFamily": element.font_family,
-                }
-            },
-            "userId": user_id,
-            "timestamp": message.get("timestamp", "")
-        }
-        
+        # 一時的にデータベース保存をスキップし、ブロードキャストのみ行う
         await self.manager.broadcast_to_whiteboard(
             whiteboard_id, 
-            broadcast_message, 
+            message, 
             exclude_user=user_id
         )
+        
+        print(f"Broadcasting drawing update to whiteboard {whiteboard_id}")
     
     async def handle_erase(
         self, 
@@ -135,25 +88,16 @@ class MessageHandler:
             user_id: ユーザーID
             db: データベースセッション
         """
-        element_id = message.get("data", {}).get("elementId")
+        print(f"Handling erase from user {user_id} on whiteboard {whiteboard_id}")
         
-        if element_id:
-            # データベースから削除
-            element = db.query(DrawingElement).filter(
-                DrawingElement.id == UUID(element_id),
-                DrawingElement.whiteboard_id == UUID(whiteboard_id)
-            ).first()
-            
-            if element:
-                db.delete(element)
-                db.commit()
-            
-            # 他のユーザーにブロードキャスト
-            await self.manager.broadcast_to_whiteboard(
-                whiteboard_id, 
-                message, 
-                exclude_user=user_id
-            )
+        # 一時的にデータベース削除をスキップし、ブロードキャストのみ行う
+        await self.manager.broadcast_to_whiteboard(
+            whiteboard_id, 
+            message, 
+            exclude_user=user_id
+        )
+        
+        print(f"Broadcasting erase to whiteboard {whiteboard_id}")
     
     async def handle_cursor_update(
         self, 
