@@ -34,6 +34,7 @@ docker-compose up frontend backend --build -d
 - **フロントエンド**: http://localhost:3000/
 - **バックエンドAPI**: http://localhost:8000/
 - **API文書**: http://localhost:8000/docs
+- **pgAdmin**: http://localhost:5050/ (admin@example.com / admin)
 
 > **⚠️ 起動時の問題**: フロントエンドにアクセスできない場合は [docs/development/docker-setup.md](./docs/development/docker-setup.md) のトラブルシューティングを参照してください。
 
@@ -123,6 +124,7 @@ docker-compose exec frontend npm test
 ### データベース
 - 開発用: PostgreSQL (localhost:5432)
 - テスト用: PostgreSQL (localhost:5433)
+- **データベース管理**: pgAdmin (localhost:5050)
 
 ### コード品質
 ```bash
@@ -140,6 +142,7 @@ make format  # コードフォーマット
 lsof -i :3000
 lsof -i :8000
 lsof -i :5432
+lsof -i :5050
 ```
 
 2. **Docker容量不足**

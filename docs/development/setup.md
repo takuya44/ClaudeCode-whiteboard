@@ -26,6 +26,7 @@ make up
 ### 4. 動作確認
 - フロントエンド: http://localhost:3000
 - バックエンドAPI: http://localhost:8000/docs
+- pgAdmin: http://localhost:5050 (admin@example.com / admin)
 
 ## 📋 詳細セットアップ手順
 
@@ -48,6 +49,10 @@ docker-compose up -d
 ```
 
 ### 開発ツール設定
+
+#### データベース管理
+- **pgAdmin**: http://localhost:5050 でWebベースのデータベース管理
+- **CLI**: `docker-compose exec db psql -U postgres -d whiteboard_dev`
 
 #### VS Code推奨拡張機能
 ```json
@@ -151,6 +156,7 @@ curl -I http://localhost:3000/
 lsof -i :3000
 lsof -i :8000
 lsof -i :5432
+lsof -i :5050
 
 # 該当プロセス終了
 kill -9 <PID>

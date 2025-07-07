@@ -32,6 +32,7 @@ docker-compose up frontend backend --build -d
 - **フロントエンド**: http://localhost:3000/
 - **バックエンド**: http://localhost:8000/
 - **API ドキュメント**: http://localhost:8000/docs
+- **pgAdmin**: http://localhost:5050/ (admin@example.com / admin)
 
 ## 🔧 トラブルシューティング
 
@@ -90,6 +91,7 @@ docker-compose up frontend --build -d
 # 使用中のプロセスを確認
 lsof -i :3000
 lsof -i :8000
+lsof -i :5050
 
 # 既存のコンテナを停止
 docker-compose down
@@ -133,6 +135,24 @@ docker-compose exec backend bash
 
 # データベース接続
 docker-compose exec db psql -U postgres -d whiteboard_dev
+
+# pgAdmin管理
+docker-compose exec pgadmin /bin/sh
+```
+
+### pgAdmin設定
+```bash
+# pgAdmin初期設定
+# URL: http://localhost:5050/
+# Email: admin@example.com
+# Password: admin
+
+# PostgreSQL サーバー追加:
+# Host: db
+# Port: 5432
+# Database: whiteboard_dev
+# Username: postgres
+# Password: postgres
 ```
 
 ### クリーンアップ
@@ -157,6 +177,7 @@ docker system prune -a
 | Frontend | http://localhost:3000/ | Vue.js + Vite開発サーバー |
 | Backend | http://localhost:8000/ | FastAPI サーバー |
 | API Docs | http://localhost:8000/docs | Swagger UI |
+| pgAdmin | http://localhost:5050/ | データベース管理ツール |
 | PostgreSQL | localhost:5432 | 開発用データベース |
 | Test PostgreSQL | localhost:5433 | テスト用データベース |
 
@@ -206,7 +227,7 @@ curl http://localhost:8000/health
    - 初回ビルド時間が長くなる場合があります
 
 3. **ポート競合**
-   - 3000, 8000, 5432, 5433番ポートが必要
+   - 3000, 8000, 5050, 5432, 5433番ポートが必要
    - 他のサービスと競合する場合は docker-compose.yml で変更可能
 
 4. **データ永続化**
