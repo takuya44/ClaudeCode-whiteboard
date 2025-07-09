@@ -5,23 +5,27 @@ Vue 3 + TypeScript + FastAPI で構築されたリアルタイムオンライン
 ## 🚀 クイックスタート
 
 ### 前提条件
+
 - Docker & Docker Compose
 - Make（オプション、コマンド簡略化のため）
 
 ### セットアップ
 
 1. **リポジトリをクローン**
+
 ```bash
 git clone <repository-url>
 cd 05_whiteBoard
 ```
 
 2. **環境設定ファイルの準備**
+
 ```bash
 cp .env.example .env
 ```
 
-3. **Docker Composeでサービス起動**
+3. **Docker Compose でサービス起動**
+
 ```bash
 # 全サービスを起動（推奨）
 docker-compose up --build -d
@@ -30,13 +34,55 @@ docker-compose up --build -d
 docker-compose up frontend backend --build -d
 ```
 
-4. **アクセス確認**
+4. **データベーステーブルの作成（重要）**
+
+```bash
+# データベースマイグレーションを実行してテーブルを作成
+make migrate
+
+# または直接コマンドを実行
+docker-compose exec backend alembic upgrade head
+```
+
+> **⚠️ 重要**: 初回起動時は必ずマイグレーションを実行してください。これを行わないとテーブルが作成されず、アプリケーションが正常に動作しません。
+
+5. **アクセス確認**
+
 - **フロントエンド**: http://localhost:3000/
-- **バックエンドAPI**: http://localhost:8000/
-- **API文書**: http://localhost:8000/docs
+- **バックエンド API**: http://localhost:8000/
+- **API 文書**: http://localhost:8000/docs
 - **pgAdmin**: http://localhost:5050/ (admin@example.com / admin)
 
 > **⚠️ 起動時の問題**: フロントエンドにアクセスできない場合は [docs/development/docker-setup.md](./docs/development/docker-setup.md) のトラブルシューティングを参照してください。
+
+### pgAdmin 初回セットアップ手順
+
+1. **pgAdmin にログイン**
+
+   - URL: http://localhost:5050/
+   - Email: `admin@example.com`
+   - Password: `admin`
+
+2. **サーバー接続の追加**
+
+   1. 左側のナビゲーションで「Servers」を右クリック → 「Register」→「Server...」
+   2. 「General」タブで以下を入力：
+      - Name: `whiteboard-dev`（任意の名前）
+   3. 「Connection」タブで以下を入力：
+      - Host name/address: `db`（Docker 内部のホスト名）
+      - Port: `5432`
+      - Maintenance database: `whiteboard_dev`
+      - Username: `postgres`
+      - Password: `postgres`
+   4. 「Save」をクリック
+
+3. **データベース確認**
+   - 接続後、`Servers` → `whiteboard-dev` → `Databases` で以下が表示されます：
+     - `whiteboard_dev`（開発用データベース）
+     - `whiteboard_test`（テスト用データベース）
+   - 各データベース内の `Schemas` → `public` → `Tables` でテーブルを確認できます
+
+> **💡 ヒント**: マイグレーション実行前はテーブルが存在しません。`make migrate`実行後に再度確認してください。
 
 ## 📁 プロジェクト構成
 
@@ -69,6 +115,7 @@ docker-compose up frontend backend --build -d
 ## 🛠️ 開発コマンド
 
 ### Make コマンド（推奨）
+
 ```bash
 make help           # 利用可能なコマンド一覧
 make setup          # 初期セットアップ
@@ -88,6 +135,7 @@ make log-list              # 最近の作業記録一覧
 ```
 
 ### Docker Compose コマンド
+
 ```bash
 docker-compose up -d              # サービス起動
 docker-compose down               # サービス停止
@@ -98,6 +146,7 @@ docker-compose exec [service] bash # コンテナシェル
 ## 🧪 テスト
 
 ### バックエンドテスト
+
 ```bash
 make test
 # または
@@ -105,6 +154,7 @@ docker-compose exec backend pytest
 ```
 
 ### フロントエンドテスト
+
 ```bash
 make test-frontend
 # または
@@ -114,19 +164,23 @@ docker-compose exec frontend npm test
 ## 📋 開発ガイドライン
 
 ### 環境変数
+
 - `.env.example` をコピーして `.env` を作成
 - 本番環境では適切な値に変更
 
 ### ホットリロード
+
 - フロントエンド: ファイル変更時に自動更新
 - バックエンド: ファイル変更時に自動更新
 
 ### データベース
+
 - 開発用: PostgreSQL (localhost:5432)
 - テスト用: PostgreSQL (localhost:5433)
 - **データベース管理**: pgAdmin (localhost:5050)
 
 ### コード品質
+
 ```bash
 make lint    # リンティング
 make format  # コードフォーマット
@@ -137,6 +191,7 @@ make format  # コードフォーマット
 ### よくある問題
 
 1. **ポートが使用中**
+
 ```bash
 # ポート使用状況確認
 lsof -i :3000
@@ -145,24 +200,87 @@ lsof -i :5432
 lsof -i :5050
 ```
 
-2. **Docker容量不足**
+2. **Docker 容量不足**
+
 ```bash
 make clean
 docker system prune -a
 ```
 
 3. **データベース接続エラー**
+
 ```bash
 make logs-db
 make reset-db
 ```
 
-### 開発環境リセット
+### Docker 環境の完全再構築
+
+環境に問題が発生した場合は、以下の手順で完全に再構築できます：
+
+#### 1. **軽微な問題の場合**
+
 ```bash
+# コンテナの再起動
+docker-compose restart
+
+# または特定のサービスのみ再起動
+docker-compose restart backend
+docker-compose restart frontend
+```
+
+#### 2. **通常の再構築**
+
+```bash
+# 1. 全てのコンテナを停止・削除
+docker-compose down
+
+# 2. コンテナを再ビルドして起動
+docker-compose up --build -d
+
+# 3. マイグレーション実行（Alembicでテーブル作成）
+make migrate
+# または
+docker-compose exec backend alembic upgrade head
+```
+
+#### 3. **完全なクリーンアップと再構築**
+
+```bash
+# 1. 全てのコンテナ、ボリューム、ネットワークを削除
+docker-compose down -v
+
+# 2. Dockerイメージも削除して完全にクリーン
+docker-compose down --rmi all
+
+# 3. キャッシュもクリア（必要に応じて）
+docker system prune -a --volumes
+
+# 4. 再構築
 make clean
 make setup
 make up
+make migrate
 ```
+
+#### 4. **データベースのみリセット**
+
+```bash
+# データベースボリュームのみ削除して再作成
+make reset-db
+
+# または手動で実行
+docker-compose down -v db
+docker-compose up -d db
+sleep 5  # データベース起動待機
+make migrate
+```
+
+> **⚠️ 注意**:
+>
+> - `docker-compose down -v` はデータベースのデータも削除します
+> - 本番環境では絶対に実行しないでください
+> - 開発データのバックアップが必要な場合は事前に pgAdmin でエクスポートしてください
 
 ## 📖 技術スタック
 
@@ -177,7 +295,7 @@ make up
 詳細なドキュメントは [docs/](./docs/) ディレクトリを参照してください：
 
 - **要件定義**: [docs/requirements/](./docs/requirements/)
-- **設計書**: [docs/design/](./docs/design/)  
+- **設計書**: [docs/design/](./docs/design/)
 - **デプロイ**: [docs/deployment/](./docs/deployment/)
 - **開発ガイド**: [docs/development/](./docs/development/)
 - **作業記録**: [docs/logs/](./docs/logs/)
@@ -185,11 +303,13 @@ make up
 ## 🤝 開発チーム向け情報
 
 ### ブランチ戦略
+
 - `main`: 本番環境
 - `develop`: 開発環境
 - `feature/*`: 機能開発
 
 ### コミット規約
+
 ```
 feat: 新機能
 fix: バグ修正
@@ -201,6 +321,7 @@ chore: 雑務
 ```
 
 ### 開発フロー
+
 1. 機能ブランチ作成
 2. 開発・テスト
 3. プルリクエスト
