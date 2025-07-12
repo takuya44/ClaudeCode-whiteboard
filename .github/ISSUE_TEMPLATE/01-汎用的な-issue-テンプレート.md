@@ -1,5 +1,5 @@
 ---
-name: 汎用的な Issue テンプレート
+name: 01-汎用的な Issue テンプレート
 about: 汎用的な Issue テンプレート
 title: ''
 labels: ''
