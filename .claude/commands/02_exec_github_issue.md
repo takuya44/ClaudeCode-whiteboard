@@ -1,0 +1,44 @@
+# /02_exec_github_issue
+
+## 使い方
+
+```
+/02_exec_github_issue <issue番号>
+```
+
+指定された GitHub issue の内容を実装します。
+
+### 使用例
+
+```
+/02_exec_github_issue 123
+/02_exec_github_issue 45
+```
+
+## 実行内容
+
+`gh issue view $ARGUMENTS` で issue を確認し、以下の手順で実装を進めます：
+
+### 1. 準備
+
+- [ ] Issue の内容を理解
+- [ ] main ブランチに切り替えて最新状態を取得 (`git checkout main && git pull`)
+- [ ] 適切な名前でブランチを作成 (例: `feature/issue-123-add-user-auth`)
+
+### 2. 実装
+
+- [ ] 必要なタスクを Todo リストで管理
+- [ ] issue の要件に従って実装
+- [ ] 適切な粒度でコミット作成
+
+### 3. 品質確認
+
+- [ ] セルフレビュー実施（`../../docs/プロジェクトドキュメント/04_開発ガイドライン/04_レビューガイドライン.md`参照）
+- [ ] テスト実行
+- [ ] lint/typecheck 実行
+
+## 注意事項
+
+- issue の要件が不明確な場合は、実装前に確認
+- 大きなタスクは適切に分割して実装
+- コミットメッセージは issue 番号を含める（例: `feat: ユーザー認証機能を追加 #123`）
