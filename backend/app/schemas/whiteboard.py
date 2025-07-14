@@ -25,6 +25,20 @@ class WhiteboardUpdate(BaseModel):
     is_public: Optional[bool] = None
 
 
+class WhiteboardCollaboratorResponse(BaseModel):
+    """ホワイトボードコラボレーターレスポンス"""
+    user_id: str
+    name: str
+    email: str
+    role: str = "user"
+    permission: str
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
 class WhiteboardInDBBase(WhiteboardBase):
     """DB内のホワイトボード基本情報"""
     id: UUID
@@ -39,7 +53,7 @@ class WhiteboardInDBBase(WhiteboardBase):
 class Whiteboard(WhiteboardInDBBase):
     """APIレスポンス用ホワイトボードスキーマ"""
     owner: Optional[User] = None
-    collaborators: List[User] = []
+    collaborators: List[WhiteboardCollaboratorResponse] = []
 
 
 class WhiteboardInDB(WhiteboardInDBBase):
@@ -56,15 +70,3 @@ class WhiteboardPermissionUpdate(BaseModel):
     """ホワイトボード権限更新リクエスト"""
     user_id: UUID
     permission: str = Field(..., description="権限レベル (view/edit/admin)")
-
-
-class WhiteboardCollaboratorResponse(BaseModel):
-    """ホワイトボードコラボレーターレスポンス"""
-    user_id: str
-    user_name: str
-    user_email: str
-    permission: str
-    joined_at: datetime
-    
-    class Config:
-        from_attributes = True

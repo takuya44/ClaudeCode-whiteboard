@@ -48,7 +48,50 @@ def read_whiteboards(
     # 重複を除いて結合
     all_whiteboards = list({wb.id: wb for wb in owned_whiteboards + shared_whiteboards}.values())
 
-    return all_whiteboards[skip : skip + limit]
+    # 各ホワイトボードのコラボレーター情報を取得
+    result = []
+    for wb in all_whiteboards[skip : skip + limit]:
+        # コラボレーターの詳細情報を取得
+        collaborators = db.query(
+            WhiteboardCollaborator.user_id,
+            User.name,
+            User.email,
+            User.role,
+            WhiteboardCollaborator.permission,
+            User.created_at,
+            User.updated_at
+        ).join(User).filter(
+            WhiteboardCollaborator.whiteboard_id == wb.id
+        ).all()
+        
+        # レスポンス用のコラボレーターデータを構築
+        collaborator_responses = []
+        for collab in collaborators:
+            collaborator_responses.append({
+                "user_id": str(collab.user_id),
+                "name": collab.name,
+                "email": collab.email,
+                "role": collab.role,
+                "permission": collab.permission.value,
+                "created_at": collab.created_at,
+                "updated_at": collab.updated_at
+            })
+        
+        # WhiteboardSchemaに合わせてレスポンスを構築
+        wb_dict = {
+            "id": wb.id,
+            "title": wb.title,
+            "description": wb.description,
+            "is_public": wb.is_public,
+            "owner_id": wb.owner_id,
+            "created_at": wb.created_at,
+            "updated_at": wb.updated_at,
+            "owner": wb.owner,
+            "collaborators": collaborator_responses
+        }
+        result.append(wb_dict)
+
+    return result
 
 
 @router.post("/", response_model=WhiteboardSchema)
@@ -98,7 +141,46 @@ def read_whiteboard(
             detail="Not enough permissions"
         )
 
-    return whiteboard
+    # コラボレーターの詳細情報を取得
+    collaborators = db.query(
+        WhiteboardCollaborator.user_id,
+        User.name,
+        User.email,
+        User.role,
+        WhiteboardCollaborator.permission,
+        User.created_at,
+        User.updated_at
+    ).join(User).filter(
+        WhiteboardCollaborator.whiteboard_id == whiteboard_id
+    ).all()
+    
+    # レスポンス用のコラボレーターデータを構築
+    collaborator_responses = []
+    for collab in collaborators:
+        collaborator_responses.append({
+            "user_id": str(collab.user_id),
+            "name": collab.name,
+            "email": collab.email,
+            "role": collab.role,
+            "permission": collab.permission.value,
+            "created_at": collab.created_at,
+            "updated_at": collab.updated_at
+        })
+    
+    # WhiteboardSchemaに合わせてレスポンスを構築
+    wb_dict = {
+        "id": whiteboard.id,
+        "title": whiteboard.title,
+        "description": whiteboard.description,
+        "is_public": whiteboard.is_public,
+        "owner_id": whiteboard.owner_id,
+        "created_at": whiteboard.created_at,
+        "updated_at": whiteboard.updated_at,
+        "owner": whiteboard.owner,
+        "collaborators": collaborator_responses
+    }
+
+    return wb_dict
 
 
 @router.put("/{whiteboard_id}", response_model=WhiteboardSchema)
@@ -380,10 +462,12 @@ def get_whiteboard_collaborators(
     # コラボレーター一覧を取得
     collaborators = db.query(
         WhiteboardCollaborator.user_id,
-        User.name.label('user_name'),
-        User.email.label('user_email'),
+        User.name,
+        User.email,
+        User.role,
         WhiteboardCollaborator.permission,
-        WhiteboardCollaborator.joined_at
+        User.created_at,
+        User.updated_at
     ).join(User).filter(
         WhiteboardCollaborator.whiteboard_id == whiteboard_id
     ).all()
@@ -393,10 +477,12 @@ def get_whiteboard_collaborators(
     for collab in collaborators:
         collaborator_responses.append(WhiteboardCollaboratorResponse(
             user_id=str(collab.user_id),
-            user_name=collab.user_name,
-            user_email=collab.user_email,
+            name=collab.name,
+            email=collab.email,
+            role=collab.role,
             permission=collab.permission.value,
-            joined_at=collab.joined_at
+            created_at=collab.created_at,
+            updated_at=collab.updated_at
         ))
 
     return collaborator_responses
