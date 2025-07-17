@@ -22,23 +22,27 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false, guestOnly: true },
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('@/views/DashboardView.vue'),
+    path: '/',
+    component: () => import('@/layouts/DefaultLayout.vue'),
     meta: { requiresAuth: true },
-  },
-  {
-    path: '/whiteboard/:id',
-    name: 'Whiteboard',
-    component: () => import('@/views/WhiteboardView.vue'),
-    meta: { requiresAuth: true },
-    props: true,
-  },
-  {
-    path: '/profile',
-    name: 'Profile',
-    component: () => import('@/views/ProfileView.vue'),
-    meta: { requiresAuth: true },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('@/views/DashboardView.vue'),
+      },
+      {
+        path: 'whiteboard/:id',
+        name: 'Whiteboard',
+        component: () => import('@/views/WhiteboardView.vue'),
+        props: true,
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('@/views/ProfileView.vue'),
+      },
+    ],
   },
   {
     path: '/:pathMatch(.*)*',
