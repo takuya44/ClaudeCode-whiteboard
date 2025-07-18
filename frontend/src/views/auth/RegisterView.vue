@@ -160,7 +160,7 @@ const handleSubmit = async () => {
       password: form.password
     })
     
-    router.push('/dashboard')
+    router.push('/app/dashboard')
   } catch (error) {
     console.error('Registration failed:', error)
     errors.value.general = '登録に失敗しました。もう一度お試しください。'

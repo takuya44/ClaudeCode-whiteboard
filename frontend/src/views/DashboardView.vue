@@ -164,7 +164,7 @@ const formatDate = (dateString: string) => {
 }
 
 const openWhiteboard = (id: string) => {
-  router.push(`/whiteboard/${id}`)
+  router.push(`/app/whiteboard/${id}`)
 }
 
 const handleCreateWhiteboard = async () => {

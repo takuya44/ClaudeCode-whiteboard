@@ -22,10 +22,14 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false, guestOnly: true },
   },
   {
-    path: '/',
+    path: '/app',
     component: () => import('@/layouts/DefaultLayout.vue'),
     meta: { requiresAuth: true },
     children: [
+      {
+        path: '',
+        redirect: '/app/dashboard',
+      },
       {
         path: 'dashboard',
         name: 'Dashboard',
