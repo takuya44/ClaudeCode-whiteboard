@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <main>
-      <slot />
+      <router-view />
     </main>
   </div>
 </template>
