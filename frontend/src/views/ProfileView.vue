@@ -1,159 +1,157 @@
 <template>
-  <DefaultLayout>
-    <div class="container mx-auto px-4 py-8">
-      <div class="max-w-3xl mx-auto">
-        <div class="bg-white shadow-soft rounded-lg">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h1 class="text-2xl font-bold text-gray-900">
-              プロフィール設定
-            </h1>
-            <p class="text-gray-600">
-              アカウント情報と設定を管理します。
-            </p>
-          </div>
+  <div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+      <div class="bg-white shadow-soft rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h1 class="text-2xl font-bold text-gray-900">
+            プロフィール設定
+          </h1>
+          <p class="text-gray-600">
+            アカウント情報と設定を管理します。
+          </p>
+        </div>
           
-          <div class="p-6 space-y-6">
-            <form @submit.prevent="handleUpdateProfile">
+        <div class="p-6 space-y-6">
+          <form @submit.prevent="handleUpdateProfile">
+            <div class="space-y-4">
+              <BaseInput
+                v-model="form.name"
+                label="お名前"
+                placeholder="お名前を入力"
+                required
+                :error="errors.name"
+              />
+                
+              <BaseInput
+                v-model="form.email"
+                type="email"
+                label="メールアドレス"
+                placeholder="メールアドレスを入力"
+                required
+                :error="errors.email"
+              />
+            </div>
+              
+            <div class="mt-6">
+              <BaseButton
+                type="submit"
+                :loading="isLoading"
+                loading-text="更新中..."
+              >
+                プロフィール更新
+              </BaseButton>
+            </div>
+          </form>
+            
+          <hr class="border-gray-200">
+            
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              パスワード変更
+            </h3>
+              
+            <!-- エラーメッセージ表示 -->
+            <div
+              v-if="passwordErrors.general"
+              class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg"
+            >
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg
+                    class="h-5 w-5 text-red-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm text-red-600">
+                    {{ passwordErrors.general }}
+                  </p>
+                </div>
+              </div>
+            </div>
+              
+            <!-- 成功メッセージ表示 -->
+            <div
+              v-if="passwordChangeSuccess"
+              class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg"
+            >
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg
+                    class="h-5 w-5 text-green-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm text-green-600">
+                    パスワードが正常に変更されました
+                  </p>
+                </div>
+              </div>
+            </div>
+              
+            <form @submit.prevent="handleChangePassword">
               <div class="space-y-4">
                 <BaseInput
-                  v-model="form.name"
-                  label="お名前"
-                  placeholder="お名前を入力"
+                  v-model="passwordForm.currentPassword"
+                  type="password"
+                  label="現在のパスワード"
+                  placeholder="現在のパスワードを入力"
                   required
-                  :error="errors.name"
+                  :error="passwordErrors.currentPassword"
                 />
-                
+                  
                 <BaseInput
-                  v-model="form.email"
-                  type="email"
-                  label="メールアドレス"
-                  placeholder="メールアドレスを入力"
+                  v-model="passwordForm.newPassword"
+                  type="password"
+                  label="新しいパスワード"
+                  placeholder="新しいパスワードを入力"
                   required
-                  :error="errors.email"
+                  :error="passwordErrors.newPassword"
+                />
+                  
+                <BaseInput
+                  v-model="passwordForm.confirmNewPassword"
+                  type="password"
+                  label="新しいパスワード確認"
+                  placeholder="新しいパスワードを再入力"
+                  required
+                  :error="passwordErrors.confirmNewPassword"
                 />
               </div>
-              
+                
               <div class="mt-6">
                 <BaseButton
                   type="submit"
-                  :loading="isLoading"
-                  loading-text="更新中..."
+                  variant="secondary"
+                  :loading="isPasswordLoading"
+                  loading-text="変更中..."
                 >
-                  プロフィール更新
+                  パスワード変更
                 </BaseButton>
               </div>
             </form>
-            
-            <hr class="border-gray-200">
-            
-            <div>
-              <h3 class="text-lg font-medium text-gray-900 mb-4">
-                パスワード変更
-              </h3>
-              
-              <!-- エラーメッセージ表示 -->
-              <div
-                v-if="passwordErrors.general"
-                class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg"
-              >
-                <div class="flex">
-                  <div class="flex-shrink-0">
-                    <svg
-                      class="h-5 w-5 text-red-400"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clip-rule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div class="ml-3">
-                    <p class="text-sm text-red-600">
-                      {{ passwordErrors.general }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 成功メッセージ表示 -->
-              <div
-                v-if="passwordChangeSuccess"
-                class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg"
-              >
-                <div class="flex">
-                  <div class="flex-shrink-0">
-                    <svg
-                      class="h-5 w-5 text-green-400"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clip-rule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div class="ml-3">
-                    <p class="text-sm text-green-600">
-                      パスワードが正常に変更されました
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <form @submit.prevent="handleChangePassword">
-                <div class="space-y-4">
-                  <BaseInput
-                    v-model="passwordForm.currentPassword"
-                    type="password"
-                    label="現在のパスワード"
-                    placeholder="現在のパスワードを入力"
-                    required
-                    :error="passwordErrors.currentPassword"
-                  />
-                  
-                  <BaseInput
-                    v-model="passwordForm.newPassword"
-                    type="password"
-                    label="新しいパスワード"
-                    placeholder="新しいパスワードを入力"
-                    required
-                    :error="passwordErrors.newPassword"
-                  />
-                  
-                  <BaseInput
-                    v-model="passwordForm.confirmNewPassword"
-                    type="password"
-                    label="新しいパスワード確認"
-                    placeholder="新しいパスワードを再入力"
-                    required
-                    :error="passwordErrors.confirmNewPassword"
-                  />
-                </div>
-                
-                <div class="mt-6">
-                  <BaseButton
-                    type="submit"
-                    variant="secondary"
-                    :loading="isPasswordLoading"
-                    loading-text="変更中..."
-                  >
-                    パスワード変更
-                  </BaseButton>
-                </div>
-              </form>
-            </div>
           </div>
         </div>
       </div>
     </div>
-  </DefaultLayout>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -161,7 +159,6 @@ import { ref, reactive, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { authApi } from '@/api/auth'
 import { BaseInput, BaseButton } from '@/components/ui'
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
 const authStore = useAuthStore()
 

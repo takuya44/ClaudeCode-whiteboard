@@ -19,7 +19,7 @@
           <BaseButton
             v-else
             size="lg"
-            @click="$router.push('/dashboard')"
+            @click="$router.push('/app/dashboard')"
           >
             ダッシュボードへ
           </BaseButton>

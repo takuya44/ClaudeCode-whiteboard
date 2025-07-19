@@ -126,7 +126,7 @@ const handleSubmit = async () => {
     
     // Redirect to intended page or dashboard
     const redirect = router.currentRoute.value.query.redirect as string
-    router.push(redirect || '/dashboard')
+    router.push(redirect || '/app/dashboard')
   } catch (error) {
     console.error('Login failed:', error)
     errors.value.general = 'メールアドレスまたはパスワードが無効です'

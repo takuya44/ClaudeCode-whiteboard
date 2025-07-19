@@ -30,7 +30,7 @@
             class="hidden md:flex space-x-6"
           >
             <router-link
-              to="/dashboard"
+              to="/app/dashboard"
               class="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
               :class="{ 'text-primary-600': $route.name === 'Dashboard' }"
             >
@@ -92,7 +92,7 @@
                   </div>
                   <div class="py-1">
                     <router-link
-                      to="/profile"
+                      to="/app/profile"
                       class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                       @click="showUserMenu = false"
                     >
@@ -189,14 +189,14 @@
         >
           <div class="space-y-2">
             <router-link
-              to="/dashboard"
+              to="/app/dashboard"
               class="block px-3 py-2 text-gray-600 hover:text-primary-600 font-medium transition-colors"
               @click="showMobileMenu = false"
             >
               ダッシュボード
             </router-link>
             <router-link
-              to="/profile"
+              to="/app/profile"
               class="block px-3 py-2 text-gray-600 hover:text-primary-600 font-medium transition-colors"
               @click="showMobileMenu = false"
             >
