@@ -12,7 +12,8 @@ from app.models.collaborator import WhiteboardCollaborator, Permission
 from app.schemas.element import (
     DrawingElement as DrawingElementSchema,
     DrawingElementCreate,
-    DrawingElementUpdate
+    DrawingElementUpdate,
+    BatchElementsUpdate
 )
 
 router = APIRouter()
@@ -151,6 +152,55 @@ def delete_all_drawing_elements(
     
     db.commit()
     return {"detail": f"{deleted_count} drawing elements deleted"}
+
+
+@router.put("/{whiteboard_id}/elements/batch", response_model=List[DrawingElementSchema])
+def save_whiteboard_elements(
+    *,
+    db: Session = Depends(get_db),
+    whiteboard_id: UUID,
+    elements_data: BatchElementsUpdate,
+    current_user: User = Depends(get_current_active_user),
+) -> Any:
+    """
+    ホワイトボードの描画要素を一括保存
+    既存の要素をすべて削除して新しい要素で置き換える
+    """
+    # ホワイトボードの存在と編集権限をチェック
+    _ = _get_whiteboard_with_edit_check(db, whiteboard_id, current_user)
+    
+    # トランザクション内で既存要素の削除と新要素の追加を実行
+    try:
+        # 既存の要素をすべて削除
+        db.query(DrawingElement).filter(
+            DrawingElement.whiteboard_id == whiteboard_id
+        ).delete()
+        
+        # 新しい要素を追加
+        saved_elements = []
+        for element_data in elements_data.elements:
+            element = DrawingElement(
+                **element_data.model_dump(),
+                whiteboard_id=whiteboard_id,
+                user_id=current_user.id
+            )
+            db.add(element)
+            saved_elements.append(element)
+        
+        db.commit()
+        
+        # 追加された要素を取得してリフレッシュ
+        for element in saved_elements:
+            db.refresh(element)
+        
+        return saved_elements
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save whiteboard elements: {str(e)}"
+        )
 
 
 # ヘルパー関数

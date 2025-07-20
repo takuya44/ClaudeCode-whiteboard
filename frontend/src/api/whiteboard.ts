@@ -13,6 +13,26 @@ export interface UpdateWhiteboardRequest {
   isPublic?: boolean
 }
 
+// Schema conversion utilities
+const convertElementToBackend = (element: Omit<DrawingElement, 'id' | 'createdAt' | 'updatedAt' | 'whiteboardId' | 'userId'>): any => {
+  return {
+    type: element.type,
+    x: element.x,
+    y: element.y,
+    width: element.width,
+    height: element.height,
+    end_x: element.endX,
+    end_y: element.endY,
+    points: element.points,
+    color: element.color,
+    stroke_width: element.strokeWidth,
+    fill_color: element.fill,
+    text_content: element.text,
+    font_size: element.fontSize,
+    font_family: element.fontFamily
+  }
+}
+
 export const whiteboardApi = {
   getWhiteboards(page = 1, perPage = 10): Promise<ApiResponse<PaginatedResponse<Whiteboard>>> {
     return apiRequest.get(`/whiteboards?page=${page}&per_page=${perPage}`)
@@ -52,6 +72,30 @@ export const whiteboardApi = {
 
   clearWhiteboard(whiteboardId: string): Promise<ApiResponse> {
     return apiRequest.delete(`/whiteboards/${whiteboardId}/elements`)
+  },
+
+  saveElements(whiteboardId: string, elements: DrawingElement[]): Promise<ApiResponse<DrawingElement[]>> {
+    // Convert elements to backend schema format and exclude server-managed fields
+    const elementsForBackend = elements.map(element => convertElementToBackend({
+      type: element.type,
+      x: element.x,
+      y: element.y,
+      width: element.width,
+      height: element.height,
+      endX: element.endX,
+      endY: element.endY,
+      points: element.points,
+      color: element.color,
+      strokeWidth: element.strokeWidth,
+      fill: element.fill,
+      text: element.text,
+      fontSize: element.fontSize,
+      fontFamily: element.fontFamily
+    }))
+    
+    return apiRequest.put(`/whiteboards/${whiteboardId}/elements/batch`, {
+      elements: elementsForBackend
+    })
   },
 
   shareWhiteboard(whiteboardId: string, userEmails: string[]): Promise<ApiResponse> {

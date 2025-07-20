@@ -365,7 +365,8 @@ defineExpose({
   clear: handleClear,
   canUndo,
   canRedo,
-  loadElements
+  loadElements,
+  canvasState
 })
 </script>
 

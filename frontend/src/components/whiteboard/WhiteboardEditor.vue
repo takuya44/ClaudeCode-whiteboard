@@ -255,7 +255,7 @@ interface Props {
 const props = defineProps<Props>()
 const route = useRoute()
 const router = useRouter()
-const { showError } = useToast()
+const { showError, showSuccess } = useToast()
 
 // Refs
 const canvasRef = ref<InstanceType<typeof WhiteboardCanvas> | null>(null)
@@ -341,20 +341,27 @@ const loadWhiteboard = async () => {
 }
 
 const saveWhiteboard = async () => {
-  if (!whiteboard.value || isSaving.value) return
+  if (!whiteboard.value || isSaving.value || !canvasRef.value) return
   
   try {
     isSaving.value = true
     
-    // Mock save functionality (will be replaced with actual API call)
-    console.log('Saving whiteboard elements...')
+    // Get current canvas elements
+    const currentElements = canvasRef.value.canvasState.elements
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Save elements to backend
+    const saveResponse = await whiteboardApi.saveElements(whiteboardId.value, currentElements)
     
-    console.log('Whiteboard saved successfully')
+    if (saveResponse.success) {
+      showSuccess('Whiteboard saved successfully!')
+    } else {
+      throw new Error(saveResponse.message || 'Failed to save whiteboard')
+    }
   } catch (error) {
     console.error('Failed to save whiteboard:', error)
+    showError(
+      error instanceof Error ? error.message : 'Failed to save whiteboard. Please try again.'
+    )
   } finally {
     isSaving.value = false
   }

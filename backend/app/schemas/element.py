@@ -64,3 +64,8 @@ class DrawingElement(DrawingElementInDBBase):
 class DrawingElementInDB(DrawingElementInDBBase):
     """DB内の描画要素完全情報"""
     pass
+
+
+class BatchElementsUpdate(BaseModel):
+    """バッチ要素更新スキーマ"""
+    elements: List[DrawingElementCreate] = Field(..., description="保存する要素配列")
