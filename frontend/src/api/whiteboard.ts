@@ -14,22 +14,40 @@ export interface UpdateWhiteboardRequest {
 }
 
 // Schema conversion utilities
+const ensureHexColor = (color: string): string => {
+  if (!color) return '#000000'
+  if (color.startsWith('#') && color.length === 7) return color
+  if (color.startsWith('#') && color.length === 4) {
+    // Convert #RGB to #RRGGBB
+    return '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3]
+  }
+  return '#000000' // Default to black if invalid format
+}
+
 const convertElementToBackend = (element: Omit<DrawingElement, 'id' | 'createdAt' | 'updatedAt' | 'whiteboardId' | 'userId'>): any => {
+  // Filter out unsupported types for backend
+  const supportedTypes = ['pen', 'line', 'rectangle', 'circle', 'text', 'sticky']
+  if (!supportedTypes.includes(element.type)) {
+    return null // Skip unsupported types like 'eraser' and 'select'
+  }
+
   return {
     type: element.type,
     x: element.x,
     y: element.y,
-    width: element.width,
-    height: element.height,
+    width: element.width && element.width >= 0 ? element.width : null,
+    height: element.height && element.height >= 0 ? element.height : null,
     end_x: element.endX,
     end_y: element.endY,
-    points: element.points,
-    color: element.color,
-    stroke_width: element.strokeWidth,
-    fill_color: element.fill,
-    text_content: element.text,
-    font_size: element.fontSize,
-    font_family: element.fontFamily
+    // Convert points format: {x, y} objects to {x: float, y: float} dictionary
+    points: element.points ? element.points.map(point => ({ x: point.x, y: point.y })) : null,
+    color: ensureHexColor(element.color),
+    // Ensure stroke_width is integer if provided
+    stroke_width: element.strokeWidth ? Math.max(1, Math.min(100, Math.round(element.strokeWidth))) : null,
+    fill_color: element.fill ? ensureHexColor(element.fill) : null,
+    text_content: element.text ? element.text.substring(0, 1000) : null,
+    font_size: element.fontSize ? Math.max(8, Math.min(72, Math.round(element.fontSize))) : null,
+    font_family: element.fontFamily ? element.fontFamily.substring(0, 100) : null
   }
 }
 
@@ -76,22 +94,31 @@ export const whiteboardApi = {
 
   saveElements(whiteboardId: string, elements: DrawingElement[]): Promise<ApiResponse<DrawingElement[]>> {
     // Convert elements to backend schema format and exclude server-managed fields
-    const elementsForBackend = elements.map(element => convertElementToBackend({
-      type: element.type,
-      x: element.x,
-      y: element.y,
-      width: element.width,
-      height: element.height,
-      endX: element.endX,
-      endY: element.endY,
-      points: element.points,
-      color: element.color,
-      strokeWidth: element.strokeWidth,
-      fill: element.fill,
-      text: element.text,
-      fontSize: element.fontSize,
-      fontFamily: element.fontFamily
-    }))
+    const elementsForBackend = elements
+      .map(element => convertElementToBackend({
+        type: element.type,
+        x: element.x,
+        y: element.y,
+        width: element.width,
+        height: element.height,
+        endX: element.endX,
+        endY: element.endY,
+        points: element.points,
+        color: element.color,
+        strokeWidth: element.strokeWidth,
+        fill: element.fill,
+        text: element.text,
+        fontSize: element.fontSize,
+        fontFamily: element.fontFamily
+      }))
+      .filter(element => element !== null) // Remove unsupported elements
+    
+    console.log('API Request:', {
+      endpoint: `/whiteboards/${whiteboardId}/elements/batch`,
+      originalElements: elements.length,
+      convertedElements: elementsForBackend.length,
+      payload: { elements: elementsForBackend }
+    })
     
     return apiRequest.put(`/whiteboards/${whiteboardId}/elements/batch`, {
       elements: elementsForBackend

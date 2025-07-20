@@ -1,8 +1,10 @@
 """Drawing elements API endpoints."""
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 from uuid import UUID
+from pydantic import ValidationError
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
@@ -169,6 +171,13 @@ def save_whiteboard_elements(
     # ホワイトボードの存在と編集権限をチェック
     _ = _get_whiteboard_with_edit_check(db, whiteboard_id, current_user)
     
+    # バリデーション: 空の要素配列チェック
+    if not elements_data.elements:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Elements array cannot be empty"
+        )
+    
     # トランザクション内で既存要素の削除と新要素の追加を実行
     try:
         # 既存の要素をすべて削除
@@ -178,14 +187,21 @@ def save_whiteboard_elements(
         
         # 新しい要素を追加
         saved_elements = []
-        for element_data in elements_data.elements:
-            element = DrawingElement(
-                **element_data.model_dump(),
-                whiteboard_id=whiteboard_id,
-                user_id=current_user.id
-            )
-            db.add(element)
-            saved_elements.append(element)
+        for i, element_data in enumerate(elements_data.elements):
+            try:
+                element = DrawingElement(
+                    **element_data.model_dump(),
+                    whiteboard_id=whiteboard_id,
+                    user_id=current_user.id
+                )
+                db.add(element)
+                saved_elements.append(element)
+            except ValidationError as ve:
+                db.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Invalid element at index {i}: {str(ve)}"
+                )
         
         db.commit()
         
@@ -195,6 +211,9 @@ def save_whiteboard_elements(
         
         return saved_elements
         
+    except HTTPException:
+        # HTTPExceptionは再度raiseする
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(

@@ -349,6 +349,12 @@ const saveWhiteboard = async () => {
     // Get current canvas elements
     const currentElements = canvasRef.value.canvasState.elements
     
+    console.log('Saving elements:', {
+      whiteboardId: whiteboardId.value,
+      elementCount: currentElements.length,
+      elements: currentElements
+    })
+    
     // Save elements to backend
     const saveResponse = await whiteboardApi.saveElements(whiteboardId.value, currentElements)
     
