@@ -185,6 +185,19 @@
 
       <!-- Canvas container -->
       <div class="canvas-container flex-1 overflow-hidden relative">
+        <!-- Loading indicator -->
+        <div
+          v-if="isLoading"
+          class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10"
+        >
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+            <p class="mt-2 text-gray-600">
+              Loading whiteboard...
+            </p>
+          </div>
+        </div>
+        
         <div
           class="canvas-wrapper absolute inset-0"
           :style="{
@@ -226,11 +239,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import DrawingToolbar from './DrawingToolbar.vue'
 import WhiteboardCanvas from './WhiteboardCanvas.vue'
 import WhiteboardShareDialog from './WhiteboardShareDialog.vue'
 import CollaboratorManagementDialog from './CollaboratorManagementDialog.vue'
+import { whiteboardApi } from '@/api/whiteboard'
+import { useToast } from '@/composables/useToast'
 import type { DrawingTool, DrawingElement, Whiteboard, User } from '@/types'
 
 interface Props {
@@ -239,6 +254,8 @@ interface Props {
 
 const props = defineProps<Props>()
 const route = useRoute()
+const router = useRouter()
+const { showError } = useToast()
 
 // Refs
 const canvasRef = ref<InstanceType<typeof WhiteboardCanvas> | null>(null)
@@ -257,6 +274,7 @@ const elementCount = ref(0)
 const onlineUserCount = ref(0)
 const isConnected = ref(false)
 const isSaving = ref(false)
+const isLoading = ref(false)
 const showShareDialog = ref(false)
 const showCollaboratorDialog = ref(false)
 
@@ -285,25 +303,40 @@ const loadWhiteboard = async () => {
   try {
     if (!whiteboardId.value) return
     
-    // Mock whiteboard data for now (will be replaced with actual API call)
-    whiteboard.value = {
-      id: whiteboardId.value,
-      title: 'My Whiteboard',
-      description: 'A collaborative workspace',
-      ownerId: 'user1',
-      isPublic: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      collaborators: []
-    }
+    isLoading.value = true
     
-    // Load existing elements into canvas (mock empty for now)
-    if (whiteboard.value && canvasRef.value) {
-      const elements: DrawingElement[] = []
-      canvasRef.value.loadElements(elements)
+    // Fetch whiteboard data and elements in parallel for better performance
+    const [response, elementsResponse] = await Promise.all([
+      whiteboardApi.getWhiteboard(whiteboardId.value),
+      whiteboardApi.getWhiteboardElements(whiteboardId.value)
+    ])
+    
+    if (response.success && response.data) {
+      whiteboard.value = response.data
+      
+      // Load existing elements into canvas
+      if (elementsResponse.success && elementsResponse.data && canvasRef.value) {
+        const elements: DrawingElement[] = elementsResponse.data
+        canvasRef.value.loadElements(elements)
+        elementCount.value = elements.length
+      }
+    } else {
+      throw new Error(response.message || 'Failed to load whiteboard')
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to load whiteboard:', error)
+    
+    // Handle 404 error - whiteboard not found
+    const axiosError = error as { response?: { status: number } }
+    if (axiosError.response?.status === 404) {
+      showError('Whiteboard not found')
+      router.push('/app/dashboard')
+    } else {
+      // Handle other errors
+      showError('Failed to load whiteboard. Please try again.')
+    }
+  } finally {
+    isLoading.value = false
   }
 }
 
