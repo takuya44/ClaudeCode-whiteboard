@@ -245,6 +245,7 @@ import WhiteboardCanvas from './WhiteboardCanvas.vue'
 import WhiteboardShareDialog from './WhiteboardShareDialog.vue'
 import CollaboratorManagementDialog from './CollaboratorManagementDialog.vue'
 import { whiteboardApi } from '@/api/whiteboard'
+import { useToast } from '@/composables/useToast'
 import type { DrawingTool, DrawingElement, Whiteboard, User } from '@/types'
 
 interface Props {
@@ -254,6 +255,7 @@ interface Props {
 const props = defineProps<Props>()
 const route = useRoute()
 const router = useRouter()
+const { showError } = useToast()
 
 // Refs
 const canvasRef = ref<InstanceType<typeof WhiteboardCanvas> | null>(null)
@@ -303,15 +305,16 @@ const loadWhiteboard = async () => {
     
     isLoading.value = true
     
-    // Fetch whiteboard data from API
-    const response = await whiteboardApi.getWhiteboard(whiteboardId.value)
+    // Fetch whiteboard data and elements in parallel for better performance
+    const [response, elementsResponse] = await Promise.all([
+      whiteboardApi.getWhiteboard(whiteboardId.value),
+      whiteboardApi.getWhiteboardElements(whiteboardId.value)
+    ])
     
     if (response.success && response.data) {
       whiteboard.value = response.data
       
-      // Load existing elements from API
-      const elementsResponse = await whiteboardApi.getWhiteboardElements(whiteboardId.value)
-      
+      // Load existing elements into canvas
       if (elementsResponse.success && elementsResponse.data && canvasRef.value) {
         const elements: DrawingElement[] = elementsResponse.data
         canvasRef.value.loadElements(elements)
@@ -320,16 +323,17 @@ const loadWhiteboard = async () => {
     } else {
       throw new Error(response.message || 'Failed to load whiteboard')
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to load whiteboard:', error)
     
     // Handle 404 error - whiteboard not found
-    if (error.response?.status === 404) {
-      alert('Whiteboard not found')
+    const axiosError = error as { response?: { status: number } }
+    if (axiosError.response?.status === 404) {
+      showError('Whiteboard not found')
       router.push('/app/dashboard')
     } else {
       // Handle other errors
-      alert('Failed to load whiteboard. Please try again.')
+      showError('Failed to load whiteboard. Please try again.')
     }
   } finally {
     isLoading.value = false
