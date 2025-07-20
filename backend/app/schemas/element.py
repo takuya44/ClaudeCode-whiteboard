@@ -5,21 +5,21 @@ from uuid import UUID
 
 
 class DrawingElementBase(BaseModel):
-    """描画要素基本スキーマ"""
-    type: str = Field(..., description="要素タイプ (pen/line/rectangle/circle/text/sticky)", pattern="^(pen|line|rectangle|circle|text|sticky)$")
-    x: float = Field(..., description="X座標")
-    y: float = Field(..., description="Y座標")
-    width: Optional[float] = Field(None, description="幅", ge=0)
-    height: Optional[float] = Field(None, description="高さ", ge=0)
-    end_x: Optional[float] = Field(None, description="終点X座標")
-    end_y: Optional[float] = Field(None, description="終点Y座標")
-    points: Optional[List[Dict[str, float]]] = Field(None, description="ペンストローク用ポイント配列")
-    color: str = Field(..., description="色 (HEX形式)", pattern="^#[0-9a-fA-F]{6}$")
-    stroke_width: Optional[int] = Field(None, description="線の太さ", ge=1, le=100)
-    fill_color: Optional[str] = Field(None, description="塗りつぶし色 (HEX形式)", pattern="^#[0-9a-fA-F]{6}$")
-    text_content: Optional[str] = Field(None, description="テキスト内容", max_length=1000)
-    font_size: Optional[int] = Field(None, description="フォントサイズ", ge=8, le=72)
-    font_family: Optional[str] = Field(None, description="フォントファミリー", max_length=100)
+    """描画要素基本スキーマ（完全に制約なし・デバッグ用）"""
+    type: str
+    x: float
+    y: float
+    width: Optional[float] = None
+    height: Optional[float] = None
+    end_x: Optional[float] = None
+    end_y: Optional[float] = None
+    points: Optional[List[Dict[str, float]]] = None
+    color: str
+    stroke_width: Optional[float] = None
+    fill_color: Optional[str] = None
+    text_content: Optional[str] = None
+    font_size: Optional[float] = None
+    font_family: Optional[str] = None
 
 
 class DrawingElementCreate(DrawingElementBase):

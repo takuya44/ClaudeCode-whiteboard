@@ -244,7 +244,7 @@ import DrawingToolbar from './DrawingToolbar.vue'
 import WhiteboardCanvas from './WhiteboardCanvas.vue'
 import WhiteboardShareDialog from './WhiteboardShareDialog.vue'
 import CollaboratorManagementDialog from './CollaboratorManagementDialog.vue'
-import { whiteboardApi } from '@/api/whiteboard'
+import { whiteboardApi, validateAndFixElement } from '@/api/whiteboard'
 import { useToast } from '@/composables/useToast'
 import type { DrawingTool, DrawingElement, Whiteboard, User } from '@/types'
 
@@ -316,7 +316,13 @@ const loadWhiteboard = async () => {
       
       // Load existing elements into canvas
       if (elementsResponse.success && elementsResponse.data && canvasRef.value) {
-        const elements: DrawingElement[] = elementsResponse.data
+        // Validate and fix elements loaded from backend
+        const elements: DrawingElement[] = elementsResponse.data.map(element => validateAndFixElement(element))
+        console.log('Elements loaded and validated from backend:', {
+          originalCount: elementsResponse.data.length,
+          validatedCount: elements.length,
+          elements: elements
+        })
         canvasRef.value.loadElements(elements)
         elementCount.value = elements.length
       }
@@ -363,9 +369,12 @@ const saveWhiteboard = async () => {
         x: element.x,
         y: element.y,
         color: element.color,
+        colorExists: !!element.color,
+        colorType: typeof element.color,
         strokeWidth: element.strokeWidth,
         fill: element.fill,
-        points: element.points?.length || 0
+        points: element.points?.length || 0,
+        fullElement: element
       })
     })
     
