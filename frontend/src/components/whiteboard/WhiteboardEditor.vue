@@ -355,6 +355,20 @@ const saveWhiteboard = async () => {
       elements: currentElements
     })
     
+    // 各要素の詳細をログ出力
+    currentElements.forEach((element, index) => {
+      console.log(`Original Element ${index}:`, {
+        id: element.id,
+        type: element.type,
+        x: element.x,
+        y: element.y,
+        color: element.color,
+        strokeWidth: element.strokeWidth,
+        fill: element.fill,
+        points: element.points?.length || 0
+      })
+    })
+    
     // Save elements to backend
     const saveResponse = await whiteboardApi.saveElements(whiteboardId.value, currentElements)
     

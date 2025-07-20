@@ -31,24 +31,46 @@ const convertElementToBackend = (element: Omit<DrawingElement, 'id' | 'createdAt
     return null // Skip unsupported types like 'eraser' and 'select'
   }
 
-  return {
+  // Ensure required fields are valid
+  if (typeof element.x !== 'number' || typeof element.y !== 'number') {
+    console.warn('Invalid coordinates for element:', element)
+    return null
+  }
+
+  if (!element.color) {
+    console.warn('Missing color for element:', element)
+    return null
+  }
+
+  const converted = {
     type: element.type,
-    x: element.x,
-    y: element.y,
-    width: element.width && element.width >= 0 ? element.width : null,
-    height: element.height && element.height >= 0 ? element.height : null,
-    end_x: element.endX,
-    end_y: element.endY,
+    x: Number(element.x),
+    y: Number(element.y),
+    width: element.width && element.width >= 0 ? Number(element.width) : undefined,
+    height: element.height && element.height >= 0 ? Number(element.height) : undefined,
+    end_x: element.endX !== undefined ? Number(element.endX) : undefined,
+    end_y: element.endY !== undefined ? Number(element.endY) : undefined,
     // Convert points format: {x, y} objects to {x: float, y: float} dictionary
-    points: element.points ? element.points.map(point => ({ x: point.x, y: point.y })) : null,
+    points: element.points && element.points.length > 0 
+      ? element.points.map(point => ({ x: Number(point.x), y: Number(point.y) })) 
+      : undefined,
     color: ensureHexColor(element.color),
     // Ensure stroke_width is integer if provided
-    stroke_width: element.strokeWidth ? Math.max(1, Math.min(100, Math.round(element.strokeWidth))) : null,
-    fill_color: element.fill ? ensureHexColor(element.fill) : null,
-    text_content: element.text ? element.text.substring(0, 1000) : null,
-    font_size: element.fontSize ? Math.max(8, Math.min(72, Math.round(element.fontSize))) : null,
-    font_family: element.fontFamily ? element.fontFamily.substring(0, 100) : null
+    stroke_width: element.strokeWidth ? Math.max(1, Math.min(100, Math.round(Number(element.strokeWidth)))) : undefined,
+    fill_color: element.fill ? ensureHexColor(element.fill) : undefined,
+    text_content: element.text ? String(element.text).substring(0, 1000) : undefined,
+    font_size: element.fontSize ? Math.max(8, Math.min(72, Math.round(Number(element.fontSize)))) : undefined,
+    font_family: element.fontFamily ? String(element.fontFamily).substring(0, 100) : undefined
   }
+
+  // Remove undefined values to avoid sending null fields
+  Object.keys(converted).forEach(key => {
+    if (converted[key as keyof typeof converted] === undefined) {
+      delete converted[key as keyof typeof converted]
+    }
+  })
+
+  return converted
 }
 
 export const whiteboardApi = {
@@ -118,6 +140,11 @@ export const whiteboardApi = {
       originalElements: elements.length,
       convertedElements: elementsForBackend.length,
       payload: { elements: elementsForBackend }
+    })
+    
+    // 詳細な要素内容をログ出力
+    elementsForBackend.forEach((element, index) => {
+      console.log(`Element ${index}:`, element)
     })
     
     return apiRequest.put(`/whiteboards/${whiteboardId}/elements/batch`, {
