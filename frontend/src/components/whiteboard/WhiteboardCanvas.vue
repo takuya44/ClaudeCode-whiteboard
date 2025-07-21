@@ -101,6 +101,7 @@
 import { ref, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useCanvas } from '@/composables/useCanvas'
 import { useWebSocket } from '@/composables/useWebSocket'
+import { validateAndFixElement } from '@/api/whiteboard'
 import type { DrawingElement, DrawingTool, User } from '@/types'
 
 interface Props {
@@ -219,7 +220,14 @@ const setupWebSocketHandlers = () => {
   // Handle drawing updates from other users
   webSocket.onMessage('draw', (data) => {
     if (data.element && data.element.userId !== currentUser.id) {
-      canvasState.elements.push(data.element)
+      // Validate and fix the element before adding to prevent missing required fields
+      const validatedElement = validateAndFixElement(data.element)
+      console.log('WebSocket element received and validated:', {
+        original: data.element,
+        validated: validatedElement,
+        colorFixed: data.element.color !== validatedElement.color
+      })
+      canvasState.elements.push(validatedElement)
       redrawCanvas()
       emit('drawing-updated', canvasState.elements)
     }
@@ -365,7 +373,8 @@ defineExpose({
   clear: handleClear,
   canUndo,
   canRedo,
-  loadElements
+  loadElements,
+  canvasState
 })
 </script>
 

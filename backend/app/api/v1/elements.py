@@ -1,8 +1,12 @@
 """Drawing elements API endpoints."""
 from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 from uuid import UUID
+from pydantic import ValidationError
+import json
+import traceback
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
@@ -12,10 +16,12 @@ from app.models.collaborator import WhiteboardCollaborator, Permission
 from app.schemas.element import (
     DrawingElement as DrawingElementSchema,
     DrawingElementCreate,
-    DrawingElementUpdate
+    DrawingElementUpdate,
+    BatchElementsUpdate
 )
 
 router = APIRouter()
+
 
 
 @router.get("/{whiteboard_id}/elements", response_model=List[DrawingElementSchema])
@@ -151,6 +157,87 @@ def delete_all_drawing_elements(
     
     db.commit()
     return {"detail": f"{deleted_count} drawing elements deleted"}
+
+
+@router.post("/{whiteboard_id}/elements/batch", response_model=List[DrawingElementSchema])
+async def save_whiteboard_elements(
+    *,
+    request: Request,
+    db: Session = Depends(get_db),
+    whiteboard_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+) -> Any:
+    """
+    ホワイトボードの描画要素を一括保存
+    既存の要素をすべて削除して新しい要素で置き換える
+    """
+    try:
+        print(f"=== BATCH SAVE REQUEST RECEIVED ===")
+        print(f"Whiteboard ID: {whiteboard_id}")
+        print(f"User: {current_user.email}")
+        
+        # 生のリクエストボディを取得してパース
+        body = await request.body()
+        print(f"Raw request body: {body.decode('utf-8')}")
+        
+        data = json.loads(body.decode('utf-8'))
+        elements_data = BatchElementsUpdate(**data)
+        
+        print(f"Number of elements to save: {len(elements_data.elements)}")
+        
+        # ホワイトボードの存在と編集権限をチェック
+        _ = _get_whiteboard_with_edit_check(db, whiteboard_id, current_user)
+        
+        # バリデーション: 空の要素配列チェック
+        if not elements_data.elements:
+            print("Empty elements array - skipping save")
+            return []
+        
+        # トランザクション内で既存要素の削除と新要素の追加を実行
+        print("Starting database transaction...")
+        
+        # 既存の要素をすべて削除
+        deleted_count = db.query(DrawingElement).filter(
+            DrawingElement.whiteboard_id == whiteboard_id
+        ).delete()
+        print(f"Deleted {deleted_count} existing elements")
+        
+        # 新しい要素を追加
+        saved_elements = []
+        for i, element_data in enumerate(elements_data.elements):
+            print(f"Saving element {i}: {element_data.model_dump()}")
+            element = DrawingElement(
+                **element_data.model_dump(),
+                whiteboard_id=whiteboard_id,
+                user_id=current_user.id
+            )
+            db.add(element)
+            saved_elements.append(element)
+        
+        db.commit()
+        print(f"Successfully saved {len(saved_elements)} elements")
+        
+        # 追加された要素を取得してリフレッシュ
+        for element in saved_elements:
+            db.refresh(element)
+        
+        return saved_elements
+        
+    except ValidationError as ve:
+        print(f"Validation error: {ve}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Validation error: {ve.errors()}"
+        )
+    except Exception as e:
+        print(f"ERROR in batch save: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save whiteboard elements: {str(e)}"
+        )
 
 
 # ヘルパー関数

@@ -8,7 +8,7 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>) {
       type: 'pen',
       color: '#000000',
       strokeWidth: 2,
-      fill: 'transparent'
+      fill: '#ffffff'  // デフォルトを白色に設定
     },
     elements: [],
     history: [[]],
@@ -151,9 +151,13 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>) {
   const drawElement = (element: DrawingElement) => {
     if (!ctx.value) return
 
+    // 各要素の描画前に必ずスタイルをリセット
+    ctx.value.save()
+    
     ctx.value.strokeStyle = element.color
     ctx.value.lineWidth = element.strokeWidth || 2
-    ctx.value.fillStyle = element.fill || 'transparent'
+    // fillがundefinedまたはnullの場合は、デフォルトで白色にする（ホワイトボードなので）
+    ctx.value.fillStyle = element.fill !== undefined && element.fill !== null ? element.fill : '#ffffff'
 
     switch (element.type) {
       case 'pen':
@@ -215,6 +219,9 @@ export function useCanvas(canvasRef: Ref<HTMLCanvasElement | null>) {
         }
         break
     }
+    
+    // canvasの状態を復元
+    ctx.value.restore()
   }
 
   const redrawCanvas = () => {

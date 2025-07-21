@@ -244,7 +244,7 @@ import DrawingToolbar from './DrawingToolbar.vue'
 import WhiteboardCanvas from './WhiteboardCanvas.vue'
 import WhiteboardShareDialog from './WhiteboardShareDialog.vue'
 import CollaboratorManagementDialog from './CollaboratorManagementDialog.vue'
-import { whiteboardApi } from '@/api/whiteboard'
+import { whiteboardApi, validateAndFixElement } from '@/api/whiteboard'
 import { useToast } from '@/composables/useToast'
 import type { DrawingTool, DrawingElement, Whiteboard, User } from '@/types'
 
@@ -255,7 +255,7 @@ interface Props {
 const props = defineProps<Props>()
 const route = useRoute()
 const router = useRouter()
-const { showError } = useToast()
+const { showError, showSuccess } = useToast()
 
 // Refs
 const canvasRef = ref<InstanceType<typeof WhiteboardCanvas> | null>(null)
@@ -267,7 +267,7 @@ const currentTool = ref<DrawingTool>({
   type: 'pen',
   color: '#000000',
   strokeWidth: 2,
-  fill: 'transparent'
+  fill: '#ffffff'  // デフォルトを白色に設定
 })
 
 const elementCount = ref(0)
@@ -316,7 +316,15 @@ const loadWhiteboard = async () => {
       
       // Load existing elements into canvas
       if (elementsResponse.success && elementsResponse.data && canvasRef.value) {
-        const elements: DrawingElement[] = elementsResponse.data
+        // Validate and fix elements loaded from backend
+        const elements: DrawingElement[] = elementsResponse.data.map((element: any) => {
+          return validateAndFixElement(element)
+        })
+        console.log('Elements loaded and validated from backend:', {
+          originalCount: elementsResponse.data.length,
+          validatedCount: elements.length,
+          elements: elements
+        })
         canvasRef.value.loadElements(elements)
         elementCount.value = elements.length
       }
@@ -341,20 +349,50 @@ const loadWhiteboard = async () => {
 }
 
 const saveWhiteboard = async () => {
-  if (!whiteboard.value || isSaving.value) return
+  if (!whiteboard.value || isSaving.value || !canvasRef.value) return
   
   try {
     isSaving.value = true
     
-    // Mock save functionality (will be replaced with actual API call)
-    console.log('Saving whiteboard elements...')
+    // Get current canvas elements
+    const currentElements = canvasRef.value.canvasState.elements
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    console.log('Saving elements:', {
+      whiteboardId: whiteboardId.value,
+      elementCount: currentElements.length,
+      elements: currentElements
+    })
     
-    console.log('Whiteboard saved successfully')
+    // 各要素の詳細をログ出力
+    currentElements.forEach((element, index) => {
+      console.log(`Original Element ${index}:`, {
+        id: element.id,
+        type: element.type,
+        x: element.x,
+        y: element.y,
+        color: element.color,
+        colorExists: !!element.color,
+        colorType: typeof element.color,
+        strokeWidth: element.strokeWidth,
+        fill: element.fill,
+        points: element.points?.length || 0,
+        fullElement: element
+      })
+    })
+    
+    // Save elements to backend
+    const saveResponse = await whiteboardApi.saveElements(whiteboardId.value, currentElements)
+    
+    if (saveResponse.success) {
+      showSuccess('Whiteboard saved successfully!')
+    } else {
+      throw new Error(saveResponse.message || 'Failed to save whiteboard')
+    }
   } catch (error) {
     console.error('Failed to save whiteboard:', error)
+    showError(
+      error instanceof Error ? error.message : 'Failed to save whiteboard. Please try again.'
+    )
   } finally {
     isSaving.value = false
   }

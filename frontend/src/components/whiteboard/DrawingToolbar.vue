@@ -80,21 +80,13 @@
         Fill
       </label>
       <div class="flex items-center gap-2">
-        <label class="flex items-center">
-          <input
-            v-model="noFill"
-            type="checkbox"
-            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          >
-          <span class="ml-2 text-sm text-gray-700">No Fill</span>
-        </label>
         <input
-          v-if="!noFill"
           v-model="fillColor"
           type="color"
           class="w-8 h-8 rounded border border-gray-300 cursor-pointer"
           @change="updateFillColor"
         >
+        <span class="text-sm text-gray-600">Fill Color</span>
       </div>
     </div>
 
@@ -220,8 +212,7 @@ const presetColors = [
 const selectedTool = ref(props.tool.type)
 const currentColor = ref(props.tool.color)
 const strokeWidth = ref(props.tool.strokeWidth)
-const fillColor = ref(props.tool.fill || '#000000')
-const noFill = ref(props.tool.fill === 'transparent' || !props.tool.fill)
+const fillColor = ref(props.tool.fill || '#ffffff')  // デフォルトを白色に設定
 const fontSize = ref(props.tool.fontSize || 16)
 
 // Computed properties
@@ -261,7 +252,7 @@ const updateTool = () => {
     type: selectedTool.value,
     color: currentColor.value,
     strokeWidth: strokeWidth.value,
-    fill: noFill.value ? 'transparent' : fillColor.value,
+    fill: fillColor.value,
     fontSize: fontSize.value
   }
   
@@ -287,15 +278,10 @@ watch(() => props.tool, (newTool) => {
   selectedTool.value = newTool.type
   currentColor.value = newTool.color
   strokeWidth.value = newTool.strokeWidth
-  fillColor.value = newTool.fill || '#000000'
-  noFill.value = newTool.fill === 'transparent' || !newTool.fill
+  fillColor.value = newTool.fill || '#ffffff'  // デフォルトを白色に設定
   fontSize.value = newTool.fontSize || 16
 }, { deep: true })
 
-// Watch noFill toggle
-watch(noFill, () => {
-  updateTool()
-})
 </script>
 
 <style scoped>
