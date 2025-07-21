@@ -37,10 +37,10 @@ class DrawingElementUpdate(BaseModel):
     end_y: Optional[float] = None
     points: Optional[List[Dict[str, float]]] = None
     color: Optional[str] = None
-    stroke_width: Optional[int] = None
+    stroke_width: Optional[float] = None
     fill_color: Optional[str] = None
     text_content: Optional[str] = None
-    font_size: Optional[int] = None
+    font_size: Optional[float] = None
     font_family: Optional[str] = None
 
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Integer, Float, Text, JSON, Enum
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Float, Text, JSON, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -51,10 +51,10 @@ class DrawingElement(Base):
     end_y = Column(Float, nullable=True)
     points = Column(JSON, nullable=True)  # ペンストローク用 [{"x": 10, "y": 20}, ...]
     color = Column(String(7), nullable=False)  # HEX形式 #RRGGBB
-    stroke_width = Column(Integer, nullable=True)
+    stroke_width = Column(Float, nullable=True)
     fill_color = Column(String(7), nullable=True)  # HEX形式 #RRGGBB
     text_content = Column(Text, nullable=True)
-    font_size = Column(Integer, nullable=True)
+    font_size = Column(Float, nullable=True)
     font_family = Column(String(100), nullable=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
