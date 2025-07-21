@@ -38,6 +38,9 @@ dist/
 build/
 *.egg-info/
 
+# TypeScript
+*.tsbuildinfo
+
 # Testing
 .coverage
 .pytest_cache/
