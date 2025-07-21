@@ -37,9 +37,13 @@ const validateAndFixElement = (element: any): DrawingElement => {
     endX: element.endX !== undefined ? Number(element.endX) : undefined,
     endY: element.endY !== undefined ? Number(element.endY) : undefined,
     points: element.points || undefined,
-    color: ensureHexColor(element.color || element.fill_color || '#000000'),
+    color: ensureHexColor(element.color || '#000000'),
     strokeWidth: element.strokeWidth || element.stroke_width || 2,
-    fill: element.fill || element.fill_color || 'transparent',
+    fill: element.fill !== undefined && element.fill !== null 
+      ? ensureHexColor(element.fill) 
+      : (element.fill_color !== undefined && element.fill_color !== null 
+        ? ensureHexColor(element.fill_color) 
+        : '#ffffff'),  // デフォルトを白色に設定
     text: element.text || element.text_content || undefined,
     fontSize: element.fontSize || element.font_size || undefined,
     fontFamily: element.fontFamily || element.font_family || undefined,
@@ -85,7 +89,7 @@ const convertElementToBackend = (element: Omit<DrawingElement, 'id' | 'createdAt
     color: ensureHexColor(element.color || '#000000'),
     // Ensure stroke_width is integer if provided
     stroke_width: element.strokeWidth ? Math.max(1, Math.min(100, Math.round(Number(element.strokeWidth)))) : undefined,
-    fill_color: element.fill ? ensureHexColor(element.fill) : undefined,
+    fill_color: element.fill !== undefined ? ensureHexColor(element.fill) : undefined,
     text_content: element.text ? String(element.text).substring(0, 1000) : undefined,
     font_size: element.fontSize ? Math.max(8, Math.min(72, Math.round(Number(element.fontSize)))) : undefined,
     font_family: element.fontFamily ? String(element.fontFamily).substring(0, 100) : undefined

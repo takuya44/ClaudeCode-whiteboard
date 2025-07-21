@@ -267,7 +267,7 @@ const currentTool = ref<DrawingTool>({
   type: 'pen',
   color: '#000000',
   strokeWidth: 2,
-  fill: 'transparent'
+  fill: '#ffffff'  // デフォルトを白色に設定
 })
 
 const elementCount = ref(0)
@@ -317,7 +317,9 @@ const loadWhiteboard = async () => {
       // Load existing elements into canvas
       if (elementsResponse.success && elementsResponse.data && canvasRef.value) {
         // Validate and fix elements loaded from backend
-        const elements: DrawingElement[] = elementsResponse.data.map(element => validateAndFixElement(element))
+        const elements: DrawingElement[] = elementsResponse.data.map((element: any) => {
+          return validateAndFixElement(element)
+        })
         console.log('Elements loaded and validated from backend:', {
           originalCount: elementsResponse.data.length,
           validatedCount: elements.length,
