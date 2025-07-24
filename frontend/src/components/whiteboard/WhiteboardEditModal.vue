@@ -30,8 +30,15 @@
           v-model="formData.description"
           rows="3"
           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 text-sm"
+          :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.description }"
           placeholder="Enter whiteboard description (optional)"
         />
+        <p
+          v-if="errors.description"
+          class="text-sm text-red-600"
+        >
+          {{ errors.description }}
+        </p>
       </div>
       
       <div class="flex items-center space-x-2">
@@ -65,6 +72,7 @@
 import { ref, reactive, watch } from 'vue'
 import { useWhiteboardStore } from '@/stores/whiteboard'
 import { useToast } from '@/composables/useToast'
+import { sanitizeInput } from '@/utils/sanitize'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import type { Whiteboard } from '@/types'
@@ -91,7 +99,17 @@ const formData = reactive({
   isPublic: false,
 })
 
-const errors = reactive({
+// 定数定義
+const MAX_TITLE_LENGTH = 100
+const MAX_DESCRIPTION_LENGTH = 500
+
+// TypeScript型定義
+interface FormErrors {
+  title: string
+  description?: string
+}
+
+const errors = reactive<FormErrors>({
   title: '',
 })
 
@@ -106,14 +124,20 @@ watch(() => props.whiteboard, (newWhiteboard) => {
 
 const validateForm = () => {
   errors.title = ''
+  errors.description = ''
   
   if (!formData.title.trim()) {
     errors.title = 'Title is required'
     return false
   }
   
-  if (formData.title.length > 100) {
-    errors.title = 'Title must be less than 100 characters'
+  if (formData.title.length > MAX_TITLE_LENGTH) {
+    errors.title = `Title must be less than ${MAX_TITLE_LENGTH} characters`
+    return false
+  }
+  
+  if (formData.description && formData.description.length > MAX_DESCRIPTION_LENGTH) {
+    errors.description = `Description must be less than ${MAX_DESCRIPTION_LENGTH} characters`
     return false
   }
   
@@ -129,8 +153,8 @@ const handleSave = async () => {
   
   try {
     const updatedWhiteboard = await whiteboardStore.updateWhiteboard(props.whiteboard.id, {
-      title: formData.title.trim(),
-      description: formData.description.trim() || undefined,
+      title: sanitizeInput(formData.title.trim()),
+      description: formData.description.trim() ? sanitizeInput(formData.description.trim()) : undefined,
       isPublic: formData.isPublic,
     })
     
@@ -147,6 +171,7 @@ const handleSave = async () => {
 const handleClose = () => {
   // Reset form and errors
   errors.title = ''
+  errors.description = ''
   emit('close')
 }
 </script>

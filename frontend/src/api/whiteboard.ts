@@ -109,7 +109,9 @@ export { validateAndFixElement }
 
 // Whiteboard response conversion utility
 const convertWhiteboardFromBackend = (data: any): Whiteboard => {
-  console.log('Converting whiteboard from backend:', data)
+  if (import.meta.env.DEV) {
+    console.log('Converting whiteboard from backend:', data)
+  }
   const converted = {
     id: data.id,
     title: data.title,
@@ -120,7 +122,9 @@ const convertWhiteboardFromBackend = (data: any): Whiteboard => {
     updatedAt: data.updated_at,
     collaborators: data.collaborators || []
   }
-  console.log('Converted whiteboard:', converted)
+  if (import.meta.env.DEV) {
+    console.log('Converted whiteboard:', converted)
+  }
   return converted
 }
 
