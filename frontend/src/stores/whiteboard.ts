@@ -277,6 +277,35 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     }
   }
 
+  const updateWhiteboard = async (whiteboardId: string, updates: { title?: string; description?: string; isPublic?: boolean }) => {
+    isLoading.value = true
+    try {
+      const response = await whiteboardApi.updateWhiteboard(whiteboardId, updates)
+      
+      if (response.success && response.data) {
+        // Update the whiteboard in the list
+        const index = whiteboards.value.findIndex(wb => wb.id === whiteboardId)
+        if (index !== -1) {
+          whiteboards.value[index] = response.data
+        }
+        
+        // Update current whiteboard if it's the one being updated
+        if (currentWhiteboard.value?.id === whiteboardId) {
+          currentWhiteboard.value = response.data
+        }
+        
+        return response.data
+      } else {
+        throw new Error(response.message || 'Failed to update whiteboard')
+      }
+    } catch (error) {
+      console.error('Update whiteboard error:', error)
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   // WebSocket message handlers
   const setupWebSocketHandlers = () => {
     // Handle incoming drawing updates
@@ -366,6 +395,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     isWebSocketConnected: readonly(isWebSocketConnected),
     fetchWhiteboards,
     createWhiteboard,
+    updateWhiteboard,
     setCurrentWhiteboard,
     loadDrawingElements,
     addDrawingElement,

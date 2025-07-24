@@ -107,21 +107,103 @@ const convertElementToBackend = (element: Omit<DrawingElement, 'id' | 'createdAt
 
 export { validateAndFixElement }
 
+// Whiteboard response conversion utility
+const convertWhiteboardFromBackend = (data: any): Whiteboard => {
+  if (import.meta.env.DEV) {
+    console.log('Converting whiteboard from backend:', data)
+  }
+  const converted = {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    ownerId: data.owner_id, // Convert snake_case to camelCase
+    isPublic: data.is_public,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+    collaborators: data.collaborators || []
+  }
+  if (import.meta.env.DEV) {
+    console.log('Converted whiteboard:', converted)
+  }
+  return converted
+}
+
 export const whiteboardApi = {
-  getWhiteboards(page = 1, perPage = 10): Promise<ApiResponse<PaginatedResponse<Whiteboard>>> {
-    return apiRequest.get(`/whiteboards?page=${page}&per_page=${perPage}`)
+  async getWhiteboards(page = 1, perPage = 10): Promise<ApiResponse<PaginatedResponse<Whiteboard>>> {
+    const response = await apiRequest.get(`/whiteboards?page=${page}&per_page=${perPage}`)
+    console.log('Get whiteboards raw response:', response.data)
+    
+    // Convert each whiteboard in the response
+    if (response.success && response.data) {
+      const whiteboards = Array.isArray(response.data) 
+        ? response.data.map(convertWhiteboardFromBackend)
+        : (response.data.data || []).map(convertWhiteboardFromBackend)
+      
+      console.log('Converted whiteboards:', whiteboards)
+      
+      return {
+        ...response,
+        data: Array.isArray(response.data) ? whiteboards : { ...response.data, data: whiteboards }
+      }
+    }
+    
+    return response
   },
 
-  getWhiteboard(id: string): Promise<ApiResponse<Whiteboard>> {
-    return apiRequest.get(`/whiteboards/${id}`)
+  async getWhiteboard(id: string): Promise<ApiResponse<Whiteboard>> {
+    const response = await apiRequest.get(`/whiteboards/${id}`)
+    
+    // Convert the whiteboard response
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: convertWhiteboardFromBackend(response.data)
+      }
+    }
+    
+    return response
   },
 
-  createWhiteboard(data: CreateWhiteboardRequest): Promise<ApiResponse<Whiteboard>> {
-    return apiRequest.post('/whiteboards', data)
+  async createWhiteboard(data: CreateWhiteboardRequest): Promise<ApiResponse<Whiteboard>> {
+    // Convert camelCase to snake_case for backend
+    const requestData = {
+      title: data.title,
+      description: data.description,
+      is_public: data.isPublic  // Convert isPublic to is_public
+    }
+    console.log('Create whiteboard request:', requestData)
+    const response = await apiRequest.post('/whiteboards', requestData)
+    
+    // Convert the whiteboard response
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: convertWhiteboardFromBackend(response.data)
+      }
+    }
+    
+    return response
   },
 
-  updateWhiteboard(id: string, data: UpdateWhiteboardRequest): Promise<ApiResponse<Whiteboard>> {
-    return apiRequest.put(`/whiteboards/${id}`, data)
+  async updateWhiteboard(id: string, data: UpdateWhiteboardRequest): Promise<ApiResponse<Whiteboard>> {
+    // Convert camelCase to snake_case for backend
+    const requestData = {
+      title: data.title,
+      description: data.description,
+      is_public: data.isPublic  // Convert isPublic to is_public
+    }
+    console.log('Update whiteboard request:', requestData)
+    const response = await apiRequest.put(`/whiteboards/${id}`, requestData)
+    
+    // Convert the whiteboard response
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: convertWhiteboardFromBackend(response.data)
+      }
+    }
+    
+    return response
   },
 
   deleteWhiteboard(id: string): Promise<ApiResponse> {
