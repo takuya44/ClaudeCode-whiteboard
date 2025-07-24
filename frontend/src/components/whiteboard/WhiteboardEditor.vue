@@ -115,6 +115,24 @@
         </div>
 
         <div class="flex items-center space-x-4">
+          <!-- Edit button -->
+          <button
+            v-if="canEdit"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            @click="showEditModal = true"
+          >
+            <svg 
+              class="w-4 h-4 mr-2 inline" 
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path 
+                d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" 
+              />
+            </svg>
+            Edit
+          </button>
+
           <!-- Collaborators button -->
           <button
             class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
@@ -234,6 +252,14 @@
       @open-share="handleOpenShareFromCollaborator"
       @collaborator-removed="handleCollaboratorRemoved"
     />
+
+    <!-- Edit Modal -->
+    <WhiteboardEditModal
+      :show="showEditModal"
+      :whiteboard="whiteboard"
+      @close="showEditModal = false"
+      @saved="handleWhiteboardUpdated"
+    />
   </div>
 </template>
 
@@ -244,8 +270,10 @@ import DrawingToolbar from './DrawingToolbar.vue'
 import WhiteboardCanvas from './WhiteboardCanvas.vue'
 import WhiteboardShareDialog from './WhiteboardShareDialog.vue'
 import CollaboratorManagementDialog from './CollaboratorManagementDialog.vue'
+import WhiteboardEditModal from './WhiteboardEditModal.vue'
 import { whiteboardApi, validateAndFixElement } from '@/api/whiteboard'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 import type { DrawingTool, DrawingElement, Whiteboard, User } from '@/types'
 
 interface Props {
@@ -277,6 +305,7 @@ const isSaving = ref(false)
 const isLoading = ref(false)
 const showShareDialog = ref(false)
 const showCollaboratorDialog = ref(false)
+const showEditModal = ref(false)
 
 // Canvas settings
 const canvasWidth = ref(1200)
@@ -297,6 +326,21 @@ const ArrowsPointingOutIcon = () => 'arrows-pointing-out'
 // Computed
 const canUndo = computed(() => canvasRef.value?.canUndo || false)
 const canRedo = computed(() => canvasRef.value?.canRedo || false)
+const authStore = useAuthStore()
+
+const canEdit = computed(() => {
+  if (!whiteboard.value || !authStore.user) return false
+
+  // Check if user is the owner
+  if (whiteboard.value.ownerId === authStore.user.id) return true
+
+  // Check if user is a collaborator
+  const isCollaborator = whiteboard.value.collaborators?.some(
+    collaborator => collaborator.id === authStore.user?.id
+  )
+  
+  return isCollaborator || false
+})
 
 // Methods
 const loadWhiteboard = async () => {
@@ -312,6 +356,7 @@ const loadWhiteboard = async () => {
     ])
     
     if (response.success && response.data) {
+      console.log('Whiteboard API response:', response.data)
       whiteboard.value = response.data
       
       // Load existing elements into canvas
@@ -452,6 +497,11 @@ const handleManageCollaborators = () => {
 const handleOpenShareFromCollaborator = () => {
   showCollaboratorDialog.value = false
   showShareDialog.value = true
+}
+
+const handleWhiteboardUpdated = (updatedWhiteboard: Whiteboard) => {
+  whiteboard.value = updatedWhiteboard
+  showSuccess('Whiteboard updated successfully')
 }
 
 const handleCollaboratorRemoved = (collaborator: any) => {
