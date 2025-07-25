@@ -69,13 +69,35 @@
       <div
         v-for="whiteboard in (whiteboards || [])"
         :key="whiteboard.id"
-        class="bg-white rounded-lg shadow-soft hover:shadow-medium transition-shadow cursor-pointer"
+        class="bg-white rounded-lg shadow-soft hover:shadow-medium transition-shadow cursor-pointer relative group"
         @click="openWhiteboard(whiteboard.id)"
       >
         <div class="p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">
-            {{ whiteboard.title }}
-          </h3>
+          <div class="flex items-start justify-between mb-2">
+            <h3 class="text-lg font-semibold text-gray-900 flex-1">
+              {{ whiteboard.title }}
+            </h3>
+            <button
+              v-if="whiteboard.ownerId === user?.id"
+              class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 ml-2"
+              title="削除"
+              @click="handleDeleteClick($event, whiteboard)"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
+          </div>
           <p
             v-if="whiteboard.description"
             class="text-gray-600 mb-4"
@@ -134,6 +156,14 @@
         </div>
       </div>
     </BaseModal>
+
+    <WhiteboardDeleteDialog
+      :show="showDeleteDialog"
+      :whiteboard-id="whiteboardToDelete?.id || ''"
+      :whiteboard-title="whiteboardToDelete?.title || ''"
+      @close="showDeleteDialog = false"
+      @deleted="handleDeleteWhiteboard"
+    />
   </div>
 </template>
 
@@ -143,12 +173,16 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useWhiteboardStore } from '@/stores/whiteboard'
 import { BaseButton, BaseModal, BaseInput } from '@/components/ui'
+import WhiteboardDeleteDialog from '@/components/whiteboard/WhiteboardDeleteDialog.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const whiteboardStore = useWhiteboardStore()
 
 const showCreateModal = ref(false)
+const showDeleteDialog = ref(false)
+const whiteboardToDelete = ref<{ id: string; title: string } | null>(null)
+
 const newWhiteboard = reactive({
   title: '',
   description: '',
@@ -183,6 +217,27 @@ const handleCreateWhiteboard = async () => {
     newWhiteboard.isPublic = false
   } catch (error) {
     console.error('Failed to create whiteboard:', error)
+  }
+}
+
+const handleDeleteClick = (event: Event, whiteboard: any) => {
+  event.stopPropagation()
+  whiteboardToDelete.value = {
+    id: whiteboard.id,
+    title: whiteboard.title
+  }
+  showDeleteDialog.value = true
+}
+
+const handleDeleteWhiteboard = async () => {
+  if (!whiteboardToDelete.value) return
+  
+  try {
+    await whiteboardStore.deleteWhiteboard(whiteboardToDelete.value.id)
+    showDeleteDialog.value = false
+    whiteboardToDelete.value = null
+  } catch (error) {
+    console.error('Failed to delete whiteboard:', error)
   }
 }
 

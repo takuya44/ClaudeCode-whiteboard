@@ -306,6 +306,38 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     }
   }
 
+  const deleteWhiteboard = async (whiteboardId: string) => {
+    isLoading.value = true
+    try {
+      const response = await whiteboardApi.deleteWhiteboard(whiteboardId)
+      
+      if (response.success) {
+        // Remove the whiteboard from the list
+        const index = whiteboards.value.findIndex(wb => wb.id === whiteboardId)
+        if (index !== -1) {
+          whiteboards.value.splice(index, 1)
+        }
+        
+        // If it's the current whiteboard, clear it
+        if (currentWhiteboard.value?.id === whiteboardId) {
+          currentWhiteboard.value = null
+          drawingElements.value = drawingElements.value.filter(
+            el => el.whiteboardId !== whiteboardId
+          )
+        }
+        
+        return response
+      } else {
+        throw new Error(response.message || 'Failed to delete whiteboard')
+      }
+    } catch (error) {
+      console.error('Delete whiteboard error:', error)
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   // WebSocket message handlers
   const setupWebSocketHandlers = () => {
     // Handle incoming drawing updates
@@ -396,6 +428,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     fetchWhiteboards,
     createWhiteboard,
     updateWhiteboard,
+    deleteWhiteboard,
     setCurrentWhiteboard,
     loadDrawingElements,
     addDrawingElement,
