@@ -81,7 +81,7 @@
               v-if="whiteboard.ownerId === user?.id"
               class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600 ml-2"
               title="削除"
-              @click="handleDeleteClick($event, whiteboard)"
+              @click="handleDeleteClick($event, whiteboard as Whiteboard)"
             >
               <svg
                 class="w-5 h-5"
@@ -161,6 +161,7 @@
       :show="showDeleteDialog"
       :whiteboard-id="whiteboardToDelete?.id || ''"
       :whiteboard-title="whiteboardToDelete?.title || ''"
+      :collaborator-count="whiteboardToDelete?.collaboratorCount"
       @close="showDeleteDialog = false"
       @deleted="handleDeleteWhiteboard"
     />
@@ -174,6 +175,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useWhiteboardStore } from '@/stores/whiteboard'
 import { BaseButton, BaseModal, BaseInput } from '@/components/ui'
 import WhiteboardDeleteDialog from '@/components/whiteboard/WhiteboardDeleteDialog.vue'
+import type { Whiteboard } from '@/types'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -181,7 +183,7 @@ const whiteboardStore = useWhiteboardStore()
 
 const showCreateModal = ref(false)
 const showDeleteDialog = ref(false)
-const whiteboardToDelete = ref<{ id: string; title: string } | null>(null)
+const whiteboardToDelete = ref<{ id: string; title: string; collaboratorCount?: number } | null>(null)
 
 const newWhiteboard = reactive({
   title: '',
@@ -220,25 +222,22 @@ const handleCreateWhiteboard = async () => {
   }
 }
 
-const handleDeleteClick = (event: Event, whiteboard: any) => {
+const handleDeleteClick = (event: Event, whiteboard: Whiteboard) => {
   event.stopPropagation()
   whiteboardToDelete.value = {
     id: whiteboard.id,
-    title: whiteboard.title
+    title: whiteboard.title,
+    collaboratorCount: whiteboard.collaborators?.length || 0
   }
   showDeleteDialog.value = true
 }
 
 const handleDeleteWhiteboard = async () => {
-  if (!whiteboardToDelete.value) return
-  
-  try {
-    await whiteboardStore.deleteWhiteboard(whiteboardToDelete.value.id)
-    showDeleteDialog.value = false
-    whiteboardToDelete.value = null
-  } catch (error) {
-    console.error('Failed to delete whiteboard:', error)
-  }
+  // 削除処理は削除ダイアログ内で完結するため、成功時のみダイアログを閉じる
+  showDeleteDialog.value = false
+  whiteboardToDelete.value = null
+  // ホワイトボード一覧を再取得
+  await whiteboardStore.fetchWhiteboards()
 }
 
 onMounted(async () => {

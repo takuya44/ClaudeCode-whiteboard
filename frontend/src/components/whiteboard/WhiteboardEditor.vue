@@ -551,7 +551,22 @@ const handleDeleteWhiteboard = async () => {
     router.push('/app/dashboard')
   } catch (error) {
     console.error('Failed to delete whiteboard:', error)
-    showError('ホワイトボードの削除に失敗しました')
+    
+    // エラーメッセージの詳細化
+    let errorMessage = 'ホワイトボードの削除に失敗しました'
+    if (error instanceof Error) {
+      if (error.message.includes('404')) {
+        errorMessage = 'ホワイトボードが見つかりません'
+      } else if (error.message.includes('403')) {
+        errorMessage = 'このホワイトボードを削除する権限がありません'
+      } else if (error.message.includes('500')) {
+        errorMessage = 'サーバーエラーが発生しました。しばらくしてから再度お試しください'
+      } else if (error.message.includes('network')) {
+        errorMessage = 'ネットワークエラーが発生しました。接続を確認してください'
+      }
+    }
+    
+    showError(errorMessage)
   }
 }
 
