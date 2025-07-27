@@ -167,6 +167,26 @@
             共有
           </button>
 
+          <!-- Delete button -->
+          <button
+            v-if="isOwner"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            @click="showDeleteDialog = true"
+          >
+            <svg
+              class="w-4 h-4 mr-2 inline"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            削除
+          </button>
+
           <!-- Zoom controls -->
           <div class="flex items-center space-x-2">
             <button
@@ -260,6 +280,16 @@
       @close="showEditModal = false"
       @saved="handleWhiteboardUpdated"
     />
+
+    <!-- Delete Dialog -->
+    <WhiteboardDeleteDialog
+      :show="showDeleteDialog"
+      :whiteboard-id="whiteboardId"
+      :whiteboard-title="whiteboard?.title || 'Untitled Whiteboard'"
+      :collaborator-count="whiteboard?.collaborators?.length || 0"
+      @close="showDeleteDialog = false"
+      @deleted="handleDeleteWhiteboard"
+    />
   </div>
 </template>
 
@@ -271,9 +301,11 @@ import WhiteboardCanvas from './WhiteboardCanvas.vue'
 import WhiteboardShareDialog from './WhiteboardShareDialog.vue'
 import CollaboratorManagementDialog from './CollaboratorManagementDialog.vue'
 import WhiteboardEditModal from './WhiteboardEditModal.vue'
+import WhiteboardDeleteDialog from './WhiteboardDeleteDialog.vue'
 import { whiteboardApi, validateAndFixElement } from '@/api/whiteboard'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
+import { useWhiteboardStore } from '@/stores/whiteboard'
 import type { DrawingTool, DrawingElement, Whiteboard, User } from '@/types'
 
 interface Props {
@@ -306,6 +338,7 @@ const isLoading = ref(false)
 const showShareDialog = ref(false)
 const showCollaboratorDialog = ref(false)
 const showEditModal = ref(false)
+const showDeleteDialog = ref(false)
 
 // Canvas settings
 const canvasWidth = ref(1200)
@@ -340,6 +373,10 @@ const canEdit = computed(() => {
   )
   
   return isCollaborator || false
+})
+
+const isOwner = computed(() => {
+  return whiteboard.value && authStore.user && whiteboard.value.ownerId === authStore.user.id
 })
 
 // Methods
@@ -502,6 +539,14 @@ const handleOpenShareFromCollaborator = () => {
 const handleWhiteboardUpdated = (updatedWhiteboard: Whiteboard) => {
   whiteboard.value = updatedWhiteboard
   showSuccess('Whiteboard updated successfully')
+}
+
+const handleDeleteWhiteboard = async () => {
+  // 削除処理は削除ダイアログ内で完結するため、成功時の後処理のみ実行
+  showDeleteDialog.value = false
+  showSuccess('ホワイトボードを削除しました')
+  // Redirect to dashboard after successful deletion
+  router.push('/app/dashboard')
 }
 
 const handleCollaboratorRemoved = (collaborator: any) => {
