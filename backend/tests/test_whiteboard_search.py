@@ -134,7 +134,7 @@ class TestWhiteboardSearch:
         other_user = User(
             email="other@example.com",
             name="Other User",
-            hashed_password="hashedpass"
+            password_hash="hashedpass"
         )
         db.add(other_user)
         db.commit()

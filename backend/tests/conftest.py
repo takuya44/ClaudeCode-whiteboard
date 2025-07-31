@@ -1,10 +1,10 @@
 """Pytest configuration and fixtures."""
 import pytest
+import os
 from typing import Generator
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base, get_db
 from app.models.user import User
@@ -12,26 +12,28 @@ from app.core.security import get_password_hash
 from main import app
 
 
-# Create test database
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+# Use test database from environment variable
+SQLALCHEMY_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL", 
+    "postgresql://postgres:postgres@db_test:5432/whiteboard_test"
 )
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @pytest.fixture(scope="function")
 def db() -> Generator[Session, None, None]:
     """Create a fresh database for each test."""
+    # Create all tables
     Base.metadata.create_all(bind=engine)
     session = TestingSessionLocal()
     try:
         yield session
     finally:
+        session.rollback()
         session.close()
+        # Clean up tables
         Base.metadata.drop_all(bind=engine)
 
 
@@ -56,9 +58,7 @@ def test_user(db: Session) -> User:
     user = User(
         email="test@example.com",
         name="Test User",
-        hashed_password=get_password_hash("testpassword123"),
-        is_active=True,
-        is_verified=True
+        password_hash=get_password_hash("testpassword123")
     )
     db.add(user)
     db.commit()
