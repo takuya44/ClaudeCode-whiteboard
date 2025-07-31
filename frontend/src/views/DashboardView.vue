@@ -9,7 +9,32 @@
       </p>
     </div>
 
-    <div class="mb-6">
+    <div class="mb-6 flex flex-col sm:flex-row gap-4">
+      <div class="flex-1 max-w-md">
+        <BaseInput
+          v-model="searchQuery"
+          type="search"
+          placeholder="ホワイトボードを検索..."
+          @input="handleSearch"
+        >
+          <template #prefix-icon>
+            <svg
+              class="w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </template>
+        </BaseInput>
+      </div>
+      
       <BaseButton @click="showCreateModal = true">
         <template #icon-left>
           <svg
@@ -48,6 +73,14 @@
         viewBox="0 0 24 24"
       >
         <path
+          v-if="searchQuery"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        />
+        <path
+          v-else
           stroke-linecap="round"
           stroke-linejoin="round"
           stroke-width="2"
@@ -55,11 +88,20 @@
         />
       </svg>
       <h3 class="mt-2 text-sm font-medium text-gray-900">
-        ホワイトボードがありません
+        {{ searchQuery ? '検索結果が見つかりません' : 'ホワイトボードがありません' }}
       </h3>
       <p class="mt-1 text-sm text-gray-500">
-        最初のホワイトボードを作成して始めましょう。
+        {{ searchQuery 
+          ? `"${searchQuery}" に一致するホワイトボードが見つかりませんでした。` 
+          : '最初のホワイトボードを作成して始めましょう。' }}
       </p>
+      <button
+        v-if="searchQuery"
+        class="mt-4 text-sm text-primary-600 hover:text-primary-500"
+        @click="clearSearch"
+      >
+        検索をクリア
+      </button>
     </div>
 
     <div
@@ -169,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useWhiteboardStore } from '@/stores/whiteboard'
@@ -184,6 +226,8 @@ const whiteboardStore = useWhiteboardStore()
 const showCreateModal = ref(false)
 const showDeleteDialog = ref(false)
 const whiteboardToDelete = ref<{ id: string; title: string; collaboratorCount?: number } | null>(null)
+const searchQuery = ref('')
+const searchDebounceTimer = ref<number | null>(null)
 
 const newWhiteboard = reactive({
   title: '',
@@ -193,7 +237,7 @@ const newWhiteboard = reactive({
 
 const user = computed(() => authStore.user)
 const whiteboards = computed(() => whiteboardStore.whiteboards || [])
-const isLoading = computed(() => whiteboardStore.isLoading)
+const isLoading = computed(() => whiteboardStore.isLoading || whiteboardStore.isSearching)
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString()
@@ -238,6 +282,28 @@ const handleDeleteWhiteboard = async () => {
   whiteboardToDelete.value = null
   // ホワイトボード一覧を再取得
   await whiteboardStore.fetchWhiteboards()
+}
+
+const handleSearch = () => {
+  // デバウンスタイマーをクリア
+  if (searchDebounceTimer.value) {
+    clearTimeout(searchDebounceTimer.value)
+  }
+  
+  // 新しいデバウンスタイマーを設定（300ms）
+  searchDebounceTimer.value = window.setTimeout(async () => {
+    if (searchQuery.value.trim()) {
+      await whiteboardStore.searchWhiteboards(searchQuery.value.trim())
+    } else {
+      // 検索クエリが空の場合は通常の一覧を取得
+      await whiteboardStore.fetchWhiteboards()
+    }
+  }, 300)
+}
+
+const clearSearch = async () => {
+  searchQuery.value = ''
+  await whiteboardStore.clearSearch()
 }
 
 onMounted(async () => {

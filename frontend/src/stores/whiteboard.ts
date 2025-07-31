@@ -13,6 +13,10 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
   const selectedTool = ref<'pen' | 'rectangle' | 'circle' | 'text' | 'sticky' | 'eraser'>('pen')
   const selectedColor = ref('#000000')
   const strokeWidth = ref(2)
+  
+  // Search-related state
+  const searchQuery = ref('')
+  const isSearching = ref(false)
 
   // WebSocket integration
   const authStore = useAuthStore()
@@ -26,10 +30,10 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     return drawingElements.value.filter(el => el.whiteboardId === currentWhiteboard.value!.id)
   })
 
-  const fetchWhiteboards = async (page = 1, perPage = 10) => {
+  const fetchWhiteboards = async (page = 1, perPage = 10, search?: string) => {
     isLoading.value = true
     try {
-      const response = await whiteboardApi.getWhiteboards(page, perPage)
+      const response = await whiteboardApi.getWhiteboards(page, perPage, search)
       
       if (response.success && response.data) {
         // Backend returns array directly, not paginated response
@@ -226,6 +230,22 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
 
   const setStrokeWidth = (width: number) => {
     strokeWidth.value = width
+  }
+
+  const searchWhiteboards = async (query: string) => {
+    searchQuery.value = query
+    isSearching.value = true
+    try {
+      const result = await fetchWhiteboards(1, 100, query)
+      return result
+    } finally {
+      isSearching.value = false
+    }
+  }
+
+  const clearSearch = () => {
+    searchQuery.value = ''
+    fetchWhiteboards(1, 100)
   }
 
   const shareWhiteboard = async (whiteboardId: string, userEmails: string[]) => {
@@ -425,6 +445,8 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     selectedColor: readonly(selectedColor),
     strokeWidth: readonly(strokeWidth),
     isWebSocketConnected: readonly(isWebSocketConnected),
+    searchQuery: readonly(searchQuery),
+    isSearching: readonly(isSearching),
     fetchWhiteboards,
     createWhiteboard,
     updateWhiteboard,
@@ -438,6 +460,8 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     setSelectedTool,
     setSelectedColor,
     setStrokeWidth,
+    searchWhiteboards,
+    clearSearch,
     shareWhiteboard,
     getCollaborators,
     removeCollaborator,

@@ -129,8 +129,12 @@ const convertWhiteboardFromBackend = (data: any): Whiteboard => {
 }
 
 export const whiteboardApi = {
-  async getWhiteboards(page = 1, perPage = 10): Promise<ApiResponse<PaginatedResponse<Whiteboard>>> {
-    const response = await apiRequest.get(`/whiteboards?page=${page}&per_page=${perPage}`)
+  async getWhiteboards(page = 1, perPage = 10, search?: string): Promise<ApiResponse<PaginatedResponse<Whiteboard>>> {
+    let url = `/whiteboards?page=${page}&per_page=${perPage}`
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`
+    }
+    const response = await apiRequest.get(url)
     console.log('Get whiteboards raw response:', response.data)
     
     // Convert each whiteboard in the response
