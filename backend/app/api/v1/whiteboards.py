@@ -1,9 +1,10 @@
 """Whiteboard management API endpoints."""
-from typing import Any, List
+from typing import Any, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, func
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
@@ -29,21 +30,41 @@ def read_whiteboards(
     current_user: User = Depends(get_current_active_user),
     skip: int = 0,
     limit: int = 100,
+    search: Optional[str] = None,
 ) -> Any:
     """
     現在のユーザーがアクセス可能なホワイトボード一覧を取得
+    検索パラメータを指定すると、タイトルまたは説明文で部分一致検索を行う
     """
-    # 自分が所有するホワイトボード
-    owned_whiteboards = db.query(Whiteboard).filter(
+    # 自分が所有するホワイトボードのクエリ
+    owned_query = db.query(Whiteboard).filter(
         Whiteboard.owner_id == current_user.id
-    ).all()
-
-    # 共有されているホワイトボード
-    shared_whiteboards = db.query(Whiteboard).join(
+    )
+    
+    # 共有されているホワイトボードのクエリ
+    shared_query = db.query(Whiteboard).join(
         WhiteboardCollaborator
     ).filter(
         WhiteboardCollaborator.user_id == current_user.id
-    ).all()
+    )
+    
+    # 検索条件を適用
+    if search:
+        owned_query = owned_query.filter(
+            or_(
+                Whiteboard.title.ilike(func.concat('%', search, '%')),
+                Whiteboard.description.ilike(func.concat('%', search, '%'))
+            )
+        )
+        shared_query = shared_query.filter(
+            or_(
+                Whiteboard.title.ilike(func.concat('%', search, '%')),
+                Whiteboard.description.ilike(func.concat('%', search, '%'))
+            )
+        )
+    
+    owned_whiteboards = owned_query.all()
+    shared_whiteboards = shared_query.all()
 
     # 重複を除いて結合
     all_whiteboards = list({wb.id: wb for wb in owned_whiteboards + shared_whiteboards}.values())
