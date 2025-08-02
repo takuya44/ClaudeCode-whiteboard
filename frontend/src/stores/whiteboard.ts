@@ -236,7 +236,8 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     searchQuery.value = query
     isSearching.value = true
     try {
-      const result = await fetchWhiteboards(1, 100, query)
+      const searchLimit = import.meta.env.VITE_SEARCH_LIMIT ? parseInt(import.meta.env.VITE_SEARCH_LIMIT) : 100
+      const result = await fetchWhiteboards(1, searchLimit, query)
       return result
     } finally {
       isSearching.value = false

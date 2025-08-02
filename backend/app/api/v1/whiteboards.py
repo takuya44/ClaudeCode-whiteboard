@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, func
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
@@ -49,14 +50,17 @@ def read_whiteboards(
     
     # 検索条件を適用
     if search:
-        search_pattern = f"%{search}%"
         owned_query = owned_query.filter(
-            (Whiteboard.title.ilike(search_pattern)) |
-            (Whiteboard.description.ilike(search_pattern))
+            or_(
+                Whiteboard.title.ilike(func.concat('%', search, '%')),
+                Whiteboard.description.ilike(func.concat('%', search, '%'))
+            )
         )
         shared_query = shared_query.filter(
-            (Whiteboard.title.ilike(search_pattern)) |
-            (Whiteboard.description.ilike(search_pattern))
+            or_(
+                Whiteboard.title.ilike(func.concat('%', search, '%')),
+                Whiteboard.description.ilike(func.concat('%', search, '%'))
+            )
         )
     
     owned_whiteboards = owned_query.all()

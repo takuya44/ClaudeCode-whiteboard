@@ -215,6 +215,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useWhiteboardStore } from '@/stores/whiteboard'
+import { useToast } from '@/composables/useToast'
 import { BaseButton, BaseModal, BaseInput } from '@/components/ui'
 import WhiteboardDeleteDialog from '@/components/whiteboard/WhiteboardDeleteDialog.vue'
 import type { Whiteboard } from '@/types'
@@ -292,11 +293,18 @@ const handleSearch = () => {
   
   // 新しいデバウンスタイマーを設定（300ms）
   searchDebounceTimer.value = window.setTimeout(async () => {
-    if (searchQuery.value.trim()) {
-      await whiteboardStore.searchWhiteboards(searchQuery.value.trim())
-    } else {
-      // 検索クエリが空の場合は通常の一覧を取得
-      await whiteboardStore.fetchWhiteboards()
+    try {
+      if (searchQuery.value.trim()) {
+        await whiteboardStore.searchWhiteboards(searchQuery.value.trim())
+      } else {
+        // 検索クエリが空の場合は通常の一覧を取得
+        await whiteboardStore.fetchWhiteboards()
+      }
+    } catch (error) {
+      console.error('Search failed:', error)
+      // ユーザーにエラーメッセージを表示する
+      const { showError } = useToast()
+      showError('検索中にエラーが発生しました。もう一度お試しください。')
     }
   }, 300)
 }
