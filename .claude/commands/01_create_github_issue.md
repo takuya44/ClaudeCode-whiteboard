@@ -29,8 +29,38 @@
    ```
 
 4. **これまでの会話を基に issue 作成**
+
    ```
    /01_create_github_issue "いままでのディスカッションを元に、issueの作成お願いします"
+   ```
+
+5. **Kiro 仕様書ベースの全フェーズ issue 一括作成**
+
+   ```
+   /01_create_github_issue ".kiro/specs/advanced-search/配下の仕様書情報を基に、tasks.mdのフェーズ1-4それぞれに対応するGitHub issueを作成してください。各issueは独立して作業可能な単位にし、フェーズ間の依存関係も明記してください。"
+   ```
+
+6. **特定フェーズの issue 作成**
+
+   ```
+   /01_create_github_issue ".kiro/specs/advanced-search/配下の仕様書情報を基に、tasks.mdのフェーズ1（基盤とデータモデル）のissueを作成してください。.kiro/specs/advanced-search/tasks.mdのフェーズ1セクションの内容を基に、requirements.mdとdesign.mdも参照して包括的なissueにしてください。"
+   ```
+
+7. **緊急度高のタスクのみ**
+
+   ```
+   /01_create_github_issue ".kiro/specs/advanced-search/tasks.mdから🔴高優先度のタスクのみを抽出してissue作成してください。フェーズ1-2の基盤とバックエンドに焦点を当ててください。"
+   ```
+
+8. **特定技術領域のタスク**
+
+   ```
+   /01_create_github_issue "advanced-search機能のバックエンド関連タスクのみでissueを作成してください。.kiro/specs/advanced-search/tasks.mdのフェーズ2から該当部分を抽出してください。"
+   ```
+
+9. **フロントエンド専用 issue**
+   ```
+   /01_create_github_issue "advanced-search機能のフロントエンド実装（フェーズ3）のissueを作成してください。Vue 3コンポーネント実装に焦点を当て、design.mdの技術仕様も参照してください。"
    ```
 
 ## 要件
