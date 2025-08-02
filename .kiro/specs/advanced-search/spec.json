@@ -1,0 +1,23 @@
+{
+  "feature_name": "advanced-search",
+  "project_description": "高度な検索: タグ、作成者、日付範囲での絞り込み機能を作成したい",
+  "created_at": "2025-08-02T00:00:00Z",
+  "updated_at": "2025-08-02T00:00:00Z",
+  "language": "japanese",
+  "phase": "initialized",
+  "approvals": {
+    "requirements": {
+      "generated": false,
+      "approved": false
+    },
+    "design": {
+      "generated": false,
+      "approved": false
+    },
+    "tasks": {
+      "generated": false,
+      "approved": false
+    }
+  },
+  "ready_for_implementation": false
+}
