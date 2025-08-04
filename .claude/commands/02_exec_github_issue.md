@@ -13,6 +13,7 @@
 ```
 /02_exec_github_issue 123
 /02_exec_github_issue 45
+/02_exec_github_issue 15  # Kiro仕様書ベースのフェーズ1実装時は、.kiro/specs/advanced-search/tasks.md のフェーズ1セクション、requirements.md、design.md を参照
 ```
 
 ## 実行内容
