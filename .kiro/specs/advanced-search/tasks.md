@@ -3,13 +3,13 @@
 ## フェーズ1：基盤とデータモデル
 
 ### 1. プロジェクト構造とコアインターフェースのセットアップ
-- [ ] 1.1 フロントエンド検索機能用ディレクトリ構造を作成
+- [x] 1.1 フロントエンド検索機能用ディレクトリ構造を作成
   - `frontend/src/components/search/` 配下にコンポーネントディレクトリ作成
   - `frontend/src/stores/search.ts` 検索状態管理ストア作成
   - `frontend/src/types/search.ts` 検索関連型定義作成
   - _要件：REQ-4（複合検索とフィルター管理）_
 
-- [ ] 1.2 バックエンド検索API用ディレクトリ構造を作成
+- [x] 1.2 バックエンド検索API用ディレクトリ構造を作成
   - `backend/app/api/v1/search.py` 検索エンドポイント作成
   - `backend/app/services/search_service.py` 検索ビジネスロジック作成
   - `backend/app/schemas/search.py` 検索リクエスト/レスポンススキーマ作成
@@ -22,19 +22,19 @@
 
 ### 2. データモデルとスキーマの実装
 
-- [ ] 2.1 検索関連TypeScript型定義の作成
+- [x] 2.1 検索関連TypeScript型定義の作成
   - `SearchFilters` インターフェース：タグ、作成者、日付範囲フィルター定義
   - `WhiteboardSearchResult` インターフェース：検索結果表示用データ構造
   - `SearchResponse` インターフェース：ページネーション付き検索レスポンス
   - _要件：REQ-1,2,3（各種フィルター）、REQ-5（検索結果表示）_
 
-- [ ] 2.2 バックエンドPydanticスキーマの作成
+- [x] 2.2 バックエンドPydanticスキーマの作成
   - `SearchFiltersSchema` クラス：入力検証付きフィルター定義
   - `WhiteboardSearchResultSchema` クラス：レスポンス用データ検証
   - `SearchResponseSchema` クラス：ページネーション付きレスポンス検証
   - _要件：REQ-6（バリデーションとエラーハンドリング）_
 
-- [ ] 2.3 データベーススキーマ拡張
+- [x] 2.3 データベーススキーマ拡張
   - タグテーブル作成（tags テーブル）：id, name, color, usage_count
   - ホワイトボード-タグ関連テーブル作成（whiteboard_tags テーブル）
   - Alembicマイグレーションスクリプト作成

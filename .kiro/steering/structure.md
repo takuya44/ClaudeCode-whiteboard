@@ -38,7 +38,12 @@ frontend/
 │   ├── layouts/          # ページレイアウトコンポーネント
 │   ├── router/           # Vue Routerルーティング設定
 │   ├── stores/           # Pinia状態管理ストア
+│   │   ├── auth.ts       # 認証状態管理
+│   │   ├── whiteboard.ts # ホワイトボード状態管理
+│   │   └── search.ts     # 検索状態管理（新機能）
 │   ├── types/            # TypeScript型定義
+│   │   ├── index.ts      # 基本型定義
+│   │   └── search.ts     # 検索関連型定義（新機能）
 │   ├── utils/            # ユーティリティ関数
 │   ├── views/            # ページコンポーネント
 │   │   └── auth/         # 認証関連ページ
@@ -64,6 +69,7 @@ backend/
 │   │       ├── auth.py   # 認証エンドポイント
 │   │       ├── whiteboards.py # ホワイトボードエンドポイント
 │   │       ├── elements.py    # 描画要素エンドポイント
+│   │       ├── search.py      # 検索エンドポイント（新機能）
 │   │       └── api.py    # APIルーター統合
 │   ├── core/             # コア機能
 │   │   ├── config.py     # アプリケーション設定
@@ -73,20 +79,26 @@ backend/
 │   ├── models/           # SQLAlchemyモデル
 │   │   ├── user.py       # ユーザーモデル
 │   │   ├── whiteboard.py # ホワイトボードモデル
-│   │   └── collaborator.py # コラボレーターモデル
+│   │   ├── collaborator.py # コラボレーターモデル
+│   │   ├── tag.py        # タグモデル（新機能）
+│   │   └── whiteboard_tag.py # ホワイトボード-タグ関連モデル（新機能）
 │   ├── schemas/          # Pydanticスキーマ
 │   │   ├── auth.py       # 認証スキーマ
 │   │   ├── user.py       # ユーザースキーマ
 │   │   ├── whiteboard.py # ホワイトボードスキーマ
-│   │   └── element.py    # 描画要素スキーマ
+│   │   ├── element.py    # 描画要素スキーマ
+│   │   └── search.py     # 検索関連スキーマ（新機能）
 │   ├── websocket/        # WebSocket関連
 │   │   ├── connection_manager.py # 接続管理
 │   │   ├── message_handler.py    # メッセージ処理
 │   │   └── websocket.py  # WebSocketエンドポイント
 │   ├── services/         # ビジネスロジック層
+│   │   └── search_service.py # 検索サービス（新機能）
 │   └── utils/            # ユーティリティ関数
 ├── alembic/              # データベースマイグレーション
 ├── tests/                # テストファイル
+│   ├── conftest.py       # テスト設定
+│   └── test_whiteboard_search.py # 検索機能テスト（新機能）
 ├── main.py               # FastAPIアプリケーションエントリーポイント
 ├── requirements.txt      # Python依存関係
 └── Dockerfile.dev        # 開発用Dockerfile
