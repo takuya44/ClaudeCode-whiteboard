@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, whiteboards, elements
+from app.api.v1 import auth, whiteboards, elements, search
 
 api_router = APIRouter()
 
@@ -23,4 +23,11 @@ api_router.include_router(
     elements.router,
     prefix="/whiteboards",
     tags=["elements"]
+)
+
+# 検索関連
+api_router.include_router(
+    search.router,
+    prefix="/search",
+    tags=["search"]
 )
