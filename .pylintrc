@@ -1,0 +1,54 @@
+[MASTER]
+init-hook='import sys; sys.path.append("backend")'
+
+[MESSAGES CONTROL]
+# Disable specific warnings for SQLAlchemy and Pydantic compatibility
+disable=
+    # SQLAlchemy related
+    too-few-public-methods,
+    invalid-name,
+    no-member,
+    # Pydantic related
+    unused-argument,
+    # Import related
+    import-error,
+    wrong-import-position,
+    # Type checking related
+    unsubscriptable-object,
+    unsupported-binary-operation,
+    # General
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    line-too-long,
+    too-many-arguments,
+    too-many-locals,
+    too-many-branches,
+    too-many-statements,
+    duplicate-code
+
+[TYPECHECK]
+# List of module names for which member attributes should not be checked
+ignored-modules=
+    sqlalchemy,
+    sqlalchemy.orm,
+    sqlalchemy.ext.declarative,
+    pydantic,
+    fastapi
+
+# List of class names for which member attributes should not be checked
+ignored-classes=
+    SQLObject,
+    Query,
+    Session,
+    BaseModel
+
+[FORMAT]
+max-line-length=120
+
+[BASIC]
+good-names=
+    i,j,k,
+    db,id,
+    e,v,
+    _

@@ -32,6 +32,7 @@ class Whiteboard(Base):
     owner = relationship("User", back_populates="owned_whiteboards")
     drawing_elements = relationship("DrawingElement", back_populates="whiteboard", cascade="all, delete-orphan")
     collaborators = relationship("WhiteboardCollaborator", back_populates="whiteboard", cascade="all, delete-orphan")
+    tags = relationship("WhiteboardTag", back_populates="whiteboard", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Whiteboard(id={self.id}, title={self.title}, owner_id={self.owner_id})>"
