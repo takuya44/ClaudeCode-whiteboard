@@ -134,6 +134,9 @@ make test-frontend
 
 # 検索機能テスト
 cd backend && pytest tests/test_whiteboard_search.py
+
+# 検索サービステスト
+cd backend && pytest tests/services/test_search_service.py
 ```
 
 ### コード品質チェック

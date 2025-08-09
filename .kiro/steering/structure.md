@@ -94,9 +94,13 @@ backend/
 │   │   └── websocket.py  # WebSocketエンドポイント
 │   ├── services/         # ビジネスロジック層
 │   │   └── search_service.py # 検索サービス（新機能）
+│   ├── repositories/     # データアクセス層（リポジトリパターン）
+│   │   └── whiteboard_repository.py # ホワイトボードリポジトリ
 │   └── utils/            # ユーティリティ関数
 ├── alembic/              # データベースマイグレーション
 ├── tests/                # テストファイル
+│   ├── services/         # サービステスト
+│   │   └── test_search_service.py # 検索サービステスト（新機能）
 │   ├── conftest.py       # テスト設定
 │   └── test_whiteboard_search.py # 検索機能テスト（新機能）
 ├── main.py               # FastAPIアプリケーションエントリーポイント
@@ -144,6 +148,7 @@ docs/
 
 #### データレイヤー
 - **SQLAlchemyモデル**: テーブル定義とリレーション
+- **リポジトリパターン**: データアクセスロジックの抽象化
 - **Pydanticスキーマ**: リクエスト/レスポンスの検証
 - **マイグレーション**: Alembicによるスキーマ管理
 
@@ -202,7 +207,7 @@ from app.schemas.user import UserResponse
 ### 1. レイヤードアーキテクチャ
 - **プレゼンテーション層**: Vue コンポーネント
 - **ビジネスロジック層**: Piniaストア、FastAPIサービス
-- **データアクセス層**: SQLAlchemyモデル
+- **データアクセス層**: リポジトリパターン、SQLAlchemyモデル
 
 ### 2. 関心の分離
 - UIロジックとビジネスロジックの分離
