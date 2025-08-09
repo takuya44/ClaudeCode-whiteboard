@@ -22,6 +22,10 @@ from app.schemas.search import (
 )
 from sqlalchemy.orm import Session
 
+# 検索設定の定数
+VALID_SORT_FIELDS = ["created_at", "updated_at", "title"]
+VALID_SORT_ORDERS = ["asc", "desc"]
+
 
 class SearchService:
     """
@@ -75,9 +79,20 @@ class SearchService:
             raise ValueError(f"Invalid search filters: {validation_result.errors}")
 
         # 2. 検索パラメータを準備
-        user_uuid = UUID(user_id)
-        tag_ids = [UUID(tag_id) for tag_id in filters.tags] if filters.tags else None
-        author_ids = [UUID(author_id) for author_id in filters.authors] if filters.authors else None
+        try:
+            user_uuid = UUID(user_id)
+        except ValueError as e:
+            raise ValueError(f"Invalid user ID format: {user_id}") from e
+            
+        try:
+            tag_ids = [UUID(tag_id) for tag_id in filters.tags] if filters.tags else None
+        except ValueError as e:
+            raise ValueError(f"Invalid tag ID format in: {filters.tags}") from e
+            
+        try:
+            author_ids = [UUID(author_id) for author_id in filters.authors] if filters.authors else None
+        except ValueError as e:
+            raise ValueError(f"Invalid author ID format in: {filters.authors}") from e
         
         # 日付範囲の処理
         date_from = None
@@ -183,14 +198,12 @@ class SearchService:
                     errors["date_range"] = ["Start date must be before end date"]
         
         # ソートフィールドのバリデーション
-        valid_sort_fields = ["created_at", "updated_at", "title"]
-        if filters.sort_by not in valid_sort_fields:
-            errors["sort_by"] = [f"Invalid sort field. Must be one of: {', '.join(valid_sort_fields)}"]
+        if filters.sort_by not in VALID_SORT_FIELDS:
+            errors["sort_by"] = [f"Invalid sort field. Must be one of: {', '.join(VALID_SORT_FIELDS)}"]
         
         # ソート順序のバリデーション
-        valid_sort_orders = ["asc", "desc"]
-        if filters.sort_order not in valid_sort_orders:
-            errors["sort_order"] = [f"Invalid sort order. Must be one of: {', '.join(valid_sort_orders)}"]
+        if filters.sort_order not in VALID_SORT_ORDERS:
+            errors["sort_order"] = [f"Invalid sort order. Must be one of: {', '.join(VALID_SORT_ORDERS)}"]
         
         return ValidationResult(
             is_valid=len(errors) == 0,

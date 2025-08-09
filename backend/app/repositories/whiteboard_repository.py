@@ -241,13 +241,12 @@ class WhiteboardRepository:
             List[User]: アクセス可能なホワイトボードの作成者リスト（重複なし、名前順）
         """
         # アクセス可能なホワイトボードの作成者を取得
+        # サブクエリを変数化することで可読性向上とクエリプラン最適化
+        accessible_subquery = self._build_base_query(user_id).subquery()
         query = (
             select(User)
             .join(Whiteboard, User.id == Whiteboard.owner_id)
-            .join(
-                self._build_base_query(user_id).subquery(),
-                Whiteboard.id == self._build_base_query(user_id).subquery().c.id
-            )
+            .join(accessible_subquery, Whiteboard.id == accessible_subquery.c.id)
             .distinct()
             .order_by(User.name)
         )

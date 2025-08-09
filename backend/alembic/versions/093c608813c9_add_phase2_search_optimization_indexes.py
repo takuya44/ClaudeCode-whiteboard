@@ -18,43 +18,47 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Phase 2: Add advanced search optimization indexes
-    
-    # 1. GIN index for full-text search on title and description
+
+    # 1. GIN index for full-text search on title and description with weight
+    # titleに高い重みづけ（'A'）、descriptionに低い重みづけ（'B'）を設定
     op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_whiteboard_fulltext 
-        ON whiteboards 
-        USING gin(to_tsvector('english', coalesce(title, '') || ' ' || coalesce(description, '')))
+        CREATE INDEX IF NOT EXISTS idx_whiteboard_fulltext
+        ON whiteboards
+        USING gin((
+            setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+            setweight(to_tsvector('english', coalesce(description, '')), 'B')
+        ))
     """)
-    
+
     # 2. Composite index for creator_id + created_at + updated_at (if not exists)
     # This replaces the existing idx_whiteboard_search with better ordering
     op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_whiteboard_search_composite 
+        CREATE INDEX IF NOT EXISTS idx_whiteboard_search_composite
         ON whiteboards (owner_id, created_at DESC, updated_at DESC)
     """)
-    
+
     # 3. Btree index for tag search optimization (replacing GIN as UUID doesn't support GIN)
     op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_whiteboard_tags_composite 
+        CREATE INDEX IF NOT EXISTS idx_whiteboard_tags_composite
         ON whiteboard_tags (tag_id, whiteboard_id)
     """)
-    
+
     # 4. Index for permission checks on collaborators
     op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_collaborators_permission 
+        CREATE INDEX IF NOT EXISTS idx_collaborators_permission
         ON whiteboard_collaborators (user_id, whiteboard_id, permission)
     """)
-    
+
     # 5. Index for public whiteboards
     op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_whiteboards_public 
-        ON whiteboards (is_public) 
+        CREATE INDEX IF NOT EXISTS idx_whiteboards_public
+        ON whiteboards (is_public)
         WHERE is_public = true
     """)
-    
+
     # 6. Index for tag usage count optimization
     op.execute("""
-        CREATE INDEX IF NOT EXISTS idx_tags_usage 
+        CREATE INDEX IF NOT EXISTS idx_tags_usage
         ON tags (usage_count DESC, name)
     """)
 
