@@ -215,7 +215,13 @@ const searchStore = useSearchStore()
 
 const handleSortChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
-  const [sortBy, sortOrder] = target.value.split('_')
+  const value = target.value
+  
+  // 最後の_で分割して、sortByとsortOrderを正しく取得
+  const lastUnderscoreIndex = value.lastIndexOf('_')
+  const sortBy = value.substring(0, lastUnderscoreIndex)
+  const sortOrder = value.substring(lastUnderscoreIndex + 1)
+  
   searchStore.updateFilters({ 
     sortBy: sortBy as 'created_at' | 'updated_at' | 'title',
     sortOrder: sortOrder as 'asc' | 'desc'
