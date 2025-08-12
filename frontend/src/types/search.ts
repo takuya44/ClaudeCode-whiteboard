@@ -14,7 +14,7 @@ export interface DateRange {
 export interface SearchFilters {
   tags: string[]
   authors: string[]
-  dateRange: DateRange
+  dateRange: DateRange | null  // dateRangeはnullを許可（未設定時のため）
   sortBy: 'created_at' | 'updated_at' | 'title'
   sortOrder: 'asc' | 'desc'
 }

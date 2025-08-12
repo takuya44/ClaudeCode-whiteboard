@@ -36,6 +36,13 @@
             >
               ダッシュボード
             </router-link>
+            <router-link
+              to="/app/search"
+              class="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+              :class="{ 'text-primary-600': $route.name === 'Search' }"
+            >
+              検索
+            </router-link>
           </div>
         </div>
 
@@ -194,6 +201,13 @@
               @click="showMobileMenu = false"
             >
               ダッシュボード
+            </router-link>
+            <router-link
+              to="/app/search"
+              class="block px-3 py-2 text-gray-600 hover:text-primary-600 font-medium transition-colors"
+              @click="showMobileMenu = false"
+            >
+              検索
             </router-link>
             <router-link
               to="/app/profile"

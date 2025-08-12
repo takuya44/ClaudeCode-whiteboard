@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { SearchFilters, WhiteboardSearchResult, SearchResponse } from '@/types/search'
+import { ref, computed, watch } from 'vue'
+import type { SearchFilters, WhiteboardSearchResult, SearchResponse, Tag } from '@/types/search'
+import type { User } from '@/types'
+import { searchAPI } from '@/api/search'
+import { debounce } from '@/utils/debounce'
 
 export const useSearchStore = defineStore('search', () => {
   // State
@@ -23,12 +26,17 @@ export const useSearchStore = defineStore('search', () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
+  // Available options
+  const availableTags = ref<Tag[]>([])
+  const availableAuthors = ref<User[]>([])
+  const isLoadingOptions = ref(false)
+
   // Computed
   const hasActiveFilters = computed(() => {
-    return filters.value.tags.length > 0 ||
-           filters.value.authors.length > 0 ||
-           filters.value.dateRange.start !== null ||
-           filters.value.dateRange.end !== null
+    return (filters.value.tags?.length ?? 0) > 0 ||
+           (filters.value.authors?.length ?? 0) > 0 ||
+           (filters.value.dateRange && (filters.value.dateRange.start !== null ||
+           filters.value.dateRange.end !== null))
   })
 
   const hasNextPage = computed(() => {
@@ -41,7 +49,30 @@ export const useSearchStore = defineStore('search', () => {
 
   // Actions
   const updateFilters = (newFilters: Partial<SearchFilters>) => {
-    filters.value = { ...filters.value, ...newFilters }
+    // authorsフィールドが文字列で渡される場合があるため、常に配列形式に正規化
+    // これはコンポーネント間での型の一貫性を保ち、バックエンドAPI仕様に準拠するため
+    if (newFilters.authors !== undefined) {
+      const authorsValue = newFilters.authors as any
+      newFilters.authors = Array.isArray(authorsValue) 
+        ? authorsValue 
+        : (authorsValue ? [authorsValue] : [])
+    }
+    
+    // tagsとauthorsが配列として確実に存在するように保証
+    const updatedFilters = { 
+      ...filters.value, 
+      ...newFilters
+    }
+    
+    // 既存の配列を保持し、undefinedの場合のみ空配列を設定
+    if (updatedFilters.tags === undefined) {
+      updatedFilters.tags = []
+    }
+    if (updatedFilters.authors === undefined) {
+      updatedFilters.authors = []
+    }
+    
+    filters.value = updatedFilters
   }
 
   const clearFilters = () => {
@@ -57,6 +88,10 @@ export const useSearchStore = defineStore('search', () => {
       sortOrder: 'desc'
     }
     currentPage.value = 1
+    // フィルタークリア時は検索結果も初期化
+    searchResults.value = []
+    totalResults.value = 0
+    // フィルタークリア後は検索をトリガーしない（結果は空に）
   }
 
   const setSearchResults = (response: SearchResponse) => {
@@ -82,6 +117,77 @@ export const useSearchStore = defineStore('search', () => {
     currentPage.value = 1 // Reset to first page when changing page size
   }
 
+  // API Actions
+  const executeSearch = async () => {
+    // アクティブなフィルターがない場合は結果を初期化
+    if (!hasActiveFilters.value) {
+      searchResults.value = []
+      totalResults.value = 0
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await searchAPI.searchWhiteboards({
+        ...filters.value,
+        page: currentPage.value,
+        pageSize: pageSize.value
+      })
+      setSearchResults(response)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '検索中にエラーが発生しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadAvailableTags = async () => {
+    if (availableTags.value.length > 0) return // Already loaded
+
+    isLoadingOptions.value = true
+    try {
+      availableTags.value = await searchAPI.getAvailableTags()
+    } catch (err) {
+      console.error('Failed to load tags:', err)
+    } finally {
+      isLoadingOptions.value = false
+    }
+  }
+
+  const loadAvailableAuthors = async () => {
+    if (availableAuthors.value.length > 0) return // Already loaded
+
+    isLoadingOptions.value = true
+    try {
+      availableAuthors.value = await searchAPI.getAvailableAuthors()
+    } catch (err) {
+      console.error('Failed to load authors:', err)
+    } finally {
+      isLoadingOptions.value = false
+    }
+  }
+
+  // Debounced search for real-time filtering
+  const debouncedSearch = debounce(executeSearch, 300)
+
+  // Safe watcher for filter changes - only triggers when filters have active values
+  watch(
+    () => ({
+      tags: filters.value.tags,
+      authors: filters.value.authors,
+      dateRange: filters.value.dateRange
+    }),
+    (newFilters, oldFilters) => {
+      // Only trigger search if there are actually active filters
+      if (hasActiveFilters.value) {
+        debouncedSearch()
+      }
+    },
+    { deep: true, flush: 'post' }
+  )
+
   return {
     // State
     filters,
@@ -91,6 +197,9 @@ export const useSearchStore = defineStore('search', () => {
     pageSize,
     isLoading,
     error,
+    availableTags,
+    availableAuthors,
+    isLoadingOptions,
     // Computed
     hasActiveFilters,
     hasNextPage,
@@ -102,6 +211,9 @@ export const useSearchStore = defineStore('search', () => {
     setLoading,
     setError,
     setCurrentPage,
-    setPageSize
+    setPageSize,
+    executeSearch,
+    loadAvailableTags,
+    loadAvailableAuthors
   }
 })
