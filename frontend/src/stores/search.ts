@@ -47,15 +47,17 @@ export const useSearchStore = defineStore('search', () => {
     return Math.ceil(totalResults.value / pageSize.value)
   })
 
+  // 型ガード関数
+  const isStringArray = (value: any): value is string[] => Array.isArray(value)
+  const normalizeToArray = (value: any): string[] => 
+    isStringArray(value) ? value : (value ? [value] : [])
+
   // Actions
   const updateFilters = (newFilters: Partial<SearchFilters>) => {
     // authorsフィールドが文字列で渡される場合があるため、常に配列形式に正規化
     // これはコンポーネント間での型の一貫性を保ち、バックエンドAPI仕様に準拠するため
     if (newFilters.authors !== undefined) {
-      const authorsValue = newFilters.authors as any
-      newFilters.authors = Array.isArray(authorsValue) 
-        ? authorsValue 
-        : (authorsValue ? [authorsValue] : [])
+      newFilters.authors = normalizeToArray(newFilters.authors)
     }
     
     // tagsとauthorsが配列として確実に存在するように保証
@@ -179,7 +181,7 @@ export const useSearchStore = defineStore('search', () => {
       authors: filters.value.authors,
       dateRange: filters.value.dateRange
     }),
-    (newFilters, oldFilters) => {
+    () => {
       // Only trigger search if there are actually active filters
       if (hasActiveFilters.value) {
         debouncedSearch()

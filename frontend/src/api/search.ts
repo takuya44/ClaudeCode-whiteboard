@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { toRaw } from 'vue'
-import type { SearchFilters, SearchResponse, Tag } from '@/types/search'
+import type { SearchFilters, SearchResponse, Tag, DateRange } from '@/types/search'
 import type { User } from '@/types'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -36,7 +36,12 @@ api.interceptors.response.use(
   }
 )
 
-export interface SearchParams extends SearchFilters {
+export interface SearchParams {
+  tags: string[]
+  authors: string[]
+  dateRange?: DateRange | null
+  sortBy: 'created_at' | 'updated_at' | 'title'
+  sortOrder: 'asc' | 'desc'
   page: number
   pageSize: number
 }

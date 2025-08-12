@@ -223,31 +223,23 @@ const isDefaultSort = computed(() => {
 const removeTag = (tagId: string) => {
   const newTags = searchStore.filters.tags.filter(id => id !== tagId)
   searchStore.updateFilters({ tags: newTags })
-  setTimeout(() => {
-    searchStore.executeSearch()
-  }, 100)
+  // watcherが自動的に検索を実行するため、手動実行は不要
 }
 
 const removeAuthor = (authorId: string) => {
   const newAuthors = searchStore.filters.authors.filter(id => id !== authorId)
   searchStore.updateFilters({ authors: newAuthors })
-  setTimeout(() => {
-    searchStore.executeSearch()
-  }, 100)
+  // watcherが自動的に検索を実行するため、手動実行は不要
 }
 
 const clearTags = () => {
   searchStore.updateFilters({ tags: [] })
-  setTimeout(() => {
-    searchStore.executeSearch()
-  }, 100)
+  // watcherが自動的に検索を実行するため、手動実行は不要
 }
 
 const clearAuthors = () => {
   searchStore.updateFilters({ authors: [] })
-  setTimeout(() => {
-    searchStore.executeSearch()
-  }, 100)
+  // watcherが自動的に検索を実行するため、手動実行は不要
 }
 
 const clearDateRange = () => {
@@ -258,9 +250,7 @@ const clearDateRange = () => {
       type: dateRange.value?.type || 'created'
     }
   })
-  setTimeout(() => {
-    searchStore.executeSearch()
-  }, 100)
+  // watcherが自動的に検索を実行するため、手動実行は不要
 }
 
 const resetSort = () => {
