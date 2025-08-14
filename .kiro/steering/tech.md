@@ -40,6 +40,8 @@
 ### HTTPクライアントとユーティリティ
 - **Axios** (v1.6.2): HTTPクライアント
 - **@vueuse/core** (v10.5.0): Vue Composition API ユーティリティ
+- **@vueform/multiselect** (v2.6.11): 高度なマルチセレクトコンポーネント（検索UI用）
+- **vue-tailwind-datepicker** (v1.7.3): 日付範囲選択コンポーネント（検索機能用）
 
 ### テストツール
 - **Vitest** (v1.0.0): 単体テストフレームワーク
@@ -137,6 +139,9 @@ cd backend && pytest tests/test_whiteboard_search.py
 
 # 検索サービステスト
 cd backend && pytest tests/services/test_search_service.py
+
+# フロントエンド検索コンポーネントテスト
+cd frontend && npm run test -- search
 ```
 
 ### コード品質チェック

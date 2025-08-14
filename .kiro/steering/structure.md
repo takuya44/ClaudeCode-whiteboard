@@ -33,7 +33,14 @@ frontend/
 │   ├── components/       # Vueコンポーネント
 │   │   ├── common/       # 共通UIコンポーネント
 │   │   ├── ui/           # 基本UIコンポーネント
-│   │   └── whiteboard/   # ホワイトボード専用コンポーネント
+│   │   ├── whiteboard/   # ホワイトボード専用コンポーネント
+│   │   └── search/       # 検索機能専用コンポーネント（実装済み）
+│   │       ├── ActiveFilters.vue    # 適用中フィルター表示
+│   │       ├── AuthorFilter.vue     # 作成者フィルター
+│   │       ├── DateRangeFilter.vue  # 日付範囲フィルター
+│   │       ├── ResultCard.vue       # 検索結果カード
+│   │       ├── SearchResults.vue    # 検索結果一覧
+│   │       └── TagFilter.vue        # タグフィルター
 │   ├── composables/      # Vue Composition API カスタムフック
 │   ├── layouts/          # ページレイアウトコンポーネント
 │   ├── router/           # Vue Routerルーティング設定
@@ -46,7 +53,8 @@ frontend/
 │   │   └── search.ts     # 検索関連型定義（新機能）
 │   ├── utils/            # ユーティリティ関数
 │   ├── views/            # ページコンポーネント
-│   │   └── auth/         # 認証関連ページ
+│   │   ├── auth/         # 認証関連ページ
+│   │   └── SearchView.vue # 高度な検索ページ（実装済み）
 │   ├── App.vue           # ルートコンポーネント
 │   ├── main.ts           # アプリケーションエントリーポイント
 │   └── style.css         # グローバルスタイル
