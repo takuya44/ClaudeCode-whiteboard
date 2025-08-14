@@ -234,12 +234,10 @@ const removeAuthor = (authorId: string) => {
 
 const clearTags = () => {
   searchStore.updateFilters({ tags: [] })
-  // watcherが自動的に検索を実行するため、手動実行は不要
 }
 
 const clearAuthors = () => {
   searchStore.updateFilters({ authors: [] })
-  // watcherが自動的に検索を実行するため、手動実行は不要
 }
 
 const clearDateRange = () => {
@@ -250,7 +248,6 @@ const clearDateRange = () => {
       type: dateRange.value?.type || 'created'
     }
   })
-  // watcherが自動的に検索を実行するため、手動実行は不要
 }
 
 const resetSort = () => {

@@ -74,10 +74,20 @@ export const useSearchStore = defineStore('search', () => {
       updatedFilters.authors = []
     }
     
-    filters.value = updatedFilters
+    // 変更があった場合のみ更新（無限ループ防止）
+    const hasChanges = JSON.stringify(filters.value) !== JSON.stringify(updatedFilters)
+    if (hasChanges) {
+      filters.value = updatedFilters
+    }
   }
 
   const clearFilters = () => {
+    // Watcherの無限ループを防ぐため、先に結果をクリア
+    searchResults.value = []
+    totalResults.value = 0
+    currentPage.value = 1
+    
+    // フィルターを一括更新（Watcherによる検索実行を回避）
     filters.value = {
       tags: [],
       authors: [],
@@ -89,11 +99,6 @@ export const useSearchStore = defineStore('search', () => {
       sortBy: 'updated_at',
       sortOrder: 'desc'
     }
-    currentPage.value = 1
-    // フィルタークリア時は検索結果も初期化
-    searchResults.value = []
-    totalResults.value = 0
-    // フィルタークリア後は検索をトリガーしない（結果は空に）
   }
 
   const setSearchResults = (response: SearchResponse) => {
@@ -181,10 +186,25 @@ export const useSearchStore = defineStore('search', () => {
       authors: filters.value.authors,
       dateRange: filters.value.dateRange
     }),
-    () => {
+    (newValue, oldValue) => {
+      // 初回実行時や完全なクリア時は検索を実行しない
+      if (!oldValue) return
+      
+      // hasActiveFiltersの値を事前計算して無限ループを防ぐ
+      const hasActiveTags = (newValue.tags?.length ?? 0) > 0
+      const hasActiveAuthors = (newValue.authors?.length ?? 0) > 0
+      const hasActiveDateRange = newValue.dateRange && 
+        (newValue.dateRange.start !== null || newValue.dateRange.end !== null)
+      
+      const hasActiveFiltersNow = hasActiveTags || hasActiveAuthors || hasActiveDateRange
+      
       // Only trigger search if there are actually active filters
-      if (hasActiveFilters.value) {
+      if (hasActiveFiltersNow) {
         debouncedSearch()
+      } else {
+        // アクティブフィルターがない場合は結果をクリア
+        searchResults.value = []
+        totalResults.value = 0
       }
     },
     { deep: true, flush: 'post' }
