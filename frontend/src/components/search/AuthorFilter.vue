@@ -1,5 +1,5 @@
 <template>
-  <div class="author-filter">
+  <div class="author-filter" data-testid="author-filter">
     <label class="block text-sm font-medium text-gray-700 mb-2">
       作成者で絞り込み
     </label>
