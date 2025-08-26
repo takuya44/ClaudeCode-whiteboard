@@ -14,6 +14,7 @@ e2e/
 ├── search-components.spec.ts       # 個別コンポーネントの動作テスト
 ├── search-error-scenarios.spec.ts  # エラーハンドリングとエッジケーステスト
 ├── search-performance.spec.ts      # パフォーマンスとREQ-6要件準拠テスト
+├── search-main-scenarios.spec.ts   # Issue #21 8.3 主要シナリオテスト（新規実装）
 └── README.md                      # このドキュメント
 ```
 
@@ -23,6 +24,7 @@ e2e/
 - **search-components.spec.ts**: フィルターなど個別部品の詳細な動作をチェック  
 - **search-error-scenarios.spec.ts**: ネットワークエラーなど異常時の動作を確認
 - **search-performance.spec.ts**: 速度要件（200ms以内）への準拠を検証
+- **search-main-scenarios.spec.ts**: Issue #21 Section 8.3で要求される主要シナリオテストを包括的に実装
 
 ## 🧪 Test Coverage
 
@@ -56,6 +58,14 @@ e2e/
 - **Debouncing**: Preventing excessive API calls during rapid filter changes
 - **Page Load Performance**: Initial page load optimization
 - **Concurrent Searches**: Race condition handling
+
+### Main Scenario Tests (`search-main-scenarios.spec.ts`) - Issue #21 8.3 Implementation
+- **Main Scenario 1**: Tag-based Search with AND Logic - @vueform/multiselect タグ選択とAND検索動作の完全テスト
+- **Main Scenario 2**: Author Search with Quick Filter - 作成者選択、OR検索、「自分のホワイトボード」クイックフィルターの検証
+- **Main Scenario 3**: Date Range Search with Presets and Validation - Vue Tailwind Datepicker、プリセット機能、バリデーションの包括テスト
+- **Main Scenario 4**: Complex Multi-filter Search with Real-time Updates - マルチフィルター組み合わせとリアルタイム結果更新の確認
+- **Main Scenario 5**: Search Results Operations and Navigation - ページネーション、ソート、ホワイトボード詳細遷移の動作検証
+- **Main Scenario 6**: Error Scenarios and User Experience - ネットワークエラー、バリデーション、フォールバック動作の確認
 
 ## 🚀 Running Tests
 
@@ -101,12 +111,24 @@ As specified in Issue #21, **Docker environment execution is mandatory**:
 # Start the complete environment
 docker-compose up -d
 
-# Run E2E tests in Docker
-docker-compose exec frontend npm run test:e2e
+# Install Playwright browsers and dependencies (first time setup)
+docker-compose exec frontend npx playwright install chromium
+docker-compose exec frontend npx playwright install-deps  # May require root access
+
+# Run E2E tests in Docker with proper environment variables
+docker-compose exec frontend bash -c "DOCKER=true npm run test:e2e"
+
+# Run specific main scenario tests
+docker-compose exec frontend bash -c "DOCKER=true npx playwright test search-main-scenarios --project chromium"
 
 # View test results
 docker-compose exec frontend npx playwright show-report
 ```
+
+**Note**: Docker環境でのPlaywright実行には追加の設定が必要です：
+- `DOCKER=true` 環境変数により、baseURLが3000番ポートに設定されます
+- システム依存関係のインストールにはroot権限が必要な場合があります
+- Chromiumブラウザのダウンロードとインストールが初回実行時に必要です
 
 ## 🎯 Test Scenarios
 
@@ -212,11 +234,17 @@ npx playwright test --trace on
 
 This E2E test suite directly addresses **Issue #21, Section 8.3**:
 
-- ✅ **Playwright設定**: Complete configuration with multi-browser support
+- ✅ **Playwright設定**: Complete configuration with multi-browser support and Docker environment compatibility
 - ✅ **検索ページナビゲーション**: `/search` route testing and rendering
 - ✅ **Vue Router統合**: SPA routing and navigation verification  
 - ✅ **SEO対応**: Meta tags and page title validation
-- ✅ **主要シナリオテスト**: Tag, author, date, and complex search workflows
+- ✅ **主要シナリオテスト**: 6つの包括的なメインシナリオテスト実装完了 (`search-main-scenarios.spec.ts`)
+  - タグ検索 (AND logic with @vueform/multiselect)
+  - 作成者検索 (OR logic + クイックフィルター)
+  - 日付範囲検索 (Vue Tailwind Datepicker + プリセット + バリデーション)
+  - 複合検索 (マルチフィルター + リアルタイム更新)
+  - 検索結果操作 (ページネーション + ソート + 詳細遷移)
+  - エラーシナリオ (ネットワークエラー + バリデーション + UX)
 - ✅ **エラーシナリオテスト**: Network errors, validation, fallback behaviors
 - ✅ **パフォーマンステスト**: REQ-6 compliance (< 200ms response time)
 
