@@ -12,9 +12,25 @@ import { test, expect } from '@playwright/test'
  */
 test.describe('Search Error Scenarios', () => {
   test.beforeEach(async ({ page }) => {
-    // Mock authentication state
+    // 認証APIのモック設定
+    await page.route('**/api/auth/me', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            id: 1,
+            username: 'testuser',
+            email: 'test@example.com'
+          }
+        })
+      })
+    })
+
+    // テスト用認証状態の設定（正しいキー名を使用）
     await page.addInitScript(() => {
-      localStorage.setItem('auth-token', 'test-token')
+      localStorage.setItem('auth_token', 'test-token')
       localStorage.setItem('user', JSON.stringify({
         id: 1,
         username: 'testuser',
@@ -97,6 +113,9 @@ test.describe('Search Error Scenarios', () => {
 
   test('should validate date range inputs', async ({ page }) => {
     await page.goto('/app/search')
+    
+    // Wait for the page to load
+    await page.waitForSelector('[data-testid="date-range-filter"]')
     
     // Find custom date range inputs
     const startDateInput = page.locator('[data-testid="start-date-input"]')
