@@ -1,6 +1,7 @@
 <template>
   <div 
     class="result-card bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+    :data-testid="`result-card-${whiteboard.id}`"
     tabindex="0"
     role="button"
     :aria-label="`ホワイトボード「${whiteboard.title}」を開く`"

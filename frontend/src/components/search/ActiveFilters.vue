@@ -1,5 +1,5 @@
 <template>
-  <div class="active-filters mb-6">
+  <div class="active-filters mb-6" data-testid="active-filters">
     <h3 class="text-sm font-medium text-gray-700 mb-3">
       アクティブなフィルター
     </h3>
@@ -15,6 +15,7 @@
           <button
             type="button"
             class="text-xs text-red-500 hover:text-red-700"
+            data-testid="remove-tag-filter"
             @click="clearTags"
           >
             すべてクリア

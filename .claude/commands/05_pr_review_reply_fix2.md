@@ -1,9 +1,9 @@
-# /04_pr_review_reply_fix2
+# /05_pr_review_reply_fix2
 
 ## 使い方
 
 ```
-/04_pr_review_reply_fix2 <PR番号>
+/05_pr_review_reply_fix2 <PR番号>
 ```
 
 PR レビューコメント修正コマンド

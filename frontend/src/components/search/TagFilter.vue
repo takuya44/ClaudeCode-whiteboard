@@ -1,5 +1,5 @@
 <template>
-  <div class="tag-filter">
+  <div class="tag-filter" data-testid="tag-filter">
     <label class="block text-sm font-medium text-gray-700 mb-2">
       タグで絞り込み
     </label>

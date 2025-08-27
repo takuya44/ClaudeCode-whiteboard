@@ -1,5 +1,5 @@
 <template>
-  <div class="date-range-filter">
+  <div class="date-range-filter" data-testid="date-range-filter">
     <label class="block text-sm font-medium text-gray-700 mb-2">
       日付範囲で絞り込み
     </label>
@@ -58,6 +58,7 @@
         <label class="block text-xs font-medium text-gray-600 mb-1">開始日</label>
         <input
           type="date"
+          data-testid="start-date-input"
           :value="startDate ? startDate.toISOString().split('T')[0] : ''"
           :max="endDate ? endDate.toISOString().split('T')[0] : undefined"
           class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
@@ -69,6 +70,7 @@
         <label class="block text-xs font-medium text-gray-600 mb-1">終了日</label>
         <input
           type="date"
+          data-testid="end-date-input"
           :value="endDate ? endDate.toISOString().split('T')[0] : ''"
           :min="startDate ? startDate.toISOString().split('T')[0] : undefined"
           class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
